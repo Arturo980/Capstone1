@@ -31,7 +31,10 @@ const App = () => {
   const [comentarios, setComentarios] = useState('');
   const [loading, setLoading] = useState(false);
   const [networkError, setNetworkError] = useState('');
-  const [theme, setTheme] = useState('light');
+  const [theme, setTheme] = useState(() => {
+    const savedTheme = localStorage.getItem('theme');
+    return savedTheme === 'dark' || savedTheme === 'light' ? savedTheme : 'light';
+  });
   const [showRegister, setShowRegister] = useState(false);
   const [regUsername, setRegUsername] = useState('');
   const [regPassword, setRegPassword] = useState('');
@@ -92,10 +95,6 @@ const App = () => {
     }
   }, [token, role]);
 
-  useEffect(() => {
-    document.body.className = theme === 'dark' ? 'dark-theme' : '';
-  }, [theme]);
-
   // NUEVO: Cargar catálogos al iniciar sesión
   useEffect(() => {
     if (!token) return;
@@ -117,7 +116,9 @@ const App = () => {
     }
   }, [token, role]);
 
+  // Guardar el modo en localStorage cuando cambia
   useEffect(() => {
+    localStorage.setItem('theme', theme);
     document.body.className = theme === 'dark' ? 'dark-theme' : '';
   }, [theme]);
 
@@ -392,7 +393,7 @@ const App = () => {
         {/* FIN NUEVO */}
         <Routes>
           <Route path="/dashboard" element={
-            token && role === 'admin' ? <Dashboard /> : <div style={{padding:40, textAlign:'center'}}><h2>Acceso denegado</h2><p>Solo los administradores pueden ver el dashboard.</p></div>
+            token && role === 'admin' ? <Dashboard theme={theme} /> : <div style={{padding:40, textAlign:'center'}}><h2>Acceso denegado</h2><p>Solo los administradores pueden ver el dashboard.</p></div>
           } />
           <Route path="/" element={
             <div>
