@@ -419,6 +419,7 @@ const App = () => {
     reports.forEach(report => {
       (report.team || [{}]).forEach(row => {
         data.push({
+          'Usuario': report.username || '',
           'Área': report.area,
           'Jornada': report.jornada,
           'Supervisor': report.supervisor,
@@ -841,6 +842,7 @@ const App = () => {
                           marginRight: 'auto',
                         }}>
                           <div style={{ marginBottom: 18 }}>
+                            <span style={{ fontWeight: 700, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', fontSize: 18 }}>Usuario:</span> <span style={{ fontWeight: 400 }}>{report.username}</span><br />
                             <span style={{ fontWeight: 700, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', fontSize: 18 }}>Área:</span> <span style={{ fontWeight: 400 }}>{report.area}</span><br />
                             <span style={{ fontWeight: 700, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', fontSize: 18 }}>Jornada:</span> <span style={{ fontWeight: 400 }}>{report.jornada}</span><br />
                             <span style={{ fontWeight: 700, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', fontSize: 18 }}>Supervisor:</span> <span style={{ fontWeight: 400 }}>{report.supervisor}</span>
