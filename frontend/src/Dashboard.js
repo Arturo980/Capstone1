@@ -1,8 +1,6 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 
 const Dashboard = ({ theme }) => {
-  const navigate = useNavigate();
   // Cambia el theme del dashboard de MongoDB Charts según el modo
   const chartsTheme = theme === 'dark' ? 'dark' : 'light';
   return (
