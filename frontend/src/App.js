@@ -356,8 +356,62 @@ const App = () => {
   const [modalLoading, setModalLoading] = useState(false);
   const [modalError, setModalError] = useState('');
 
+  // --- Manejo de cierre de sesión por inactividad con modal y temporizador ---
+  const [showInactivityModal, setShowInactivityModal] = useState(false);
+  const [inactivitySeconds, setInactivitySeconds] = useState(30);
+  useEffect(() => {
+    if (!token) return;
+    let timeoutId;
+    let countdownId;
+    const startCountdown = () => {
+      setInactivitySeconds(30);
+      setShowInactivityModal(true);
+      countdownId = setInterval(() => {
+        setInactivitySeconds(prev => {
+          if (prev <= 1) {
+            clearInterval(countdownId);
+            setShowInactivityModal(false);
+            handleLogout();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    };
+    const resetTimer = () => {
+      clearTimeout(timeoutId);
+      if (showInactivityModal) {
+        setShowInactivityModal(false);
+        setInactivitySeconds(30);
+        clearInterval(countdownId);
+      }
+      timeoutId = setTimeout(startCountdown, 10 * 60 * 1000); // 10 minutos
+    };
+    // Eventos que reinician el temporizador
+    const events = ['mousemove', 'keydown', 'mousedown', 'touchstart', 'scroll'];
+    events.forEach(event => window.addEventListener(event, resetTimer));
+    resetTimer();
+    return () => {
+      clearTimeout(timeoutId);
+      clearInterval(countdownId);
+      events.forEach(event => window.removeEventListener(event, resetTimer));
+    };
+    // eslint-disable-next-line
+  }, [token]);
+
   return (
     <Router>
+      {showInactivityModal && (
+        <div style={{position:'fixed',top:0,left:0,width:'100vw',height:'100vh',background:'rgba(0,0,0,0.4)',zIndex:2000,display:'flex',alignItems:'center',justifyContent:'center'}}>
+          <div style={{background:'#fff',padding:32,borderRadius:12,minWidth:320,boxShadow:'0 2px 16px 0 rgba(44,62,80,0.18)',textAlign:'center'}}>
+            <h3>Sesión a punto de cerrarse por inactividad</h3>
+            <p>¿Deseas continuar? Tienes <span style={{fontWeight:'bold',color:'#d63031',fontSize:22}}>{inactivitySeconds}</span> segundos para responder.</p>
+            <div style={{marginTop:24,display:'flex',gap:16,justifyContent:'center'}}>
+              <button className="btn-primary" onClick={() => { setShowInactivityModal(false); setInactivitySeconds(30); }}>Seguir conectado</button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className={`main-container${theme === 'dark' ? ' dark' : ''}`}>
         {/* NUEVO: Barra de botones superior */}
         {token && (
@@ -716,93 +770,99 @@ const App = () => {
                   {reports.length === 0 ? (
                     <p>No hay informes para mostrar.</p>
                   ) : (
-                    <ul>
+                    <ul style={{ padding: 0, margin: 0 }}>
                       {reports.map((report) => (
-                        <li key={report._id || report.id}>
-                          <div className="report-block">
-                            <div className="report-row"><strong>Área:</strong> {report.area}</div>
-                            <div className="report-row"><strong>Jornada:</strong> {report.jornada}</div>
-                            <div className="report-row"><strong>Supervisor:</strong> {report.supervisor}</div>
-                            <div className="report-row">
-                              <strong>Equipo:</strong>
-                              <div className="table-responsive">
-                                <table>
-                                  <thead>
-                                    <tr>
-                                      <th>RUT</th>
-                                      <th>NOMBRE</th>
-                                      <th>CARGO</th>
-                                      <th>CÓDIGO EQUIPO</th>
-                                      <th>TIPO DE ASIST</th>
-                                      <th>TRAMO</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    {(report.team || []).map((row, idx) => (
-                                      <tr key={idx}>
-                                        <td>{row.rut}</td>
-                                        <td>{row.nombre}</td>
-                                        <td>{row.cargo}</td>
-                                        <td>{row.codigoEquipo}</td>
-                                        <td>{row.tipoAsist}</td>
-                                        <td>{
-                                          row.tramo ||
-                                          (catalogTramos.find(t => t.id === row.tramoId || t._id === row.tramoId)?.nombre || '')
-                                        }</td>
-                                      </tr>
-                                    ))}
-                                  </tbody>
-                                </table>
-                              </div>
-                            </div>
-                            {report.avances && report.avances.length > 0 && (
-                              <div className="report-row">
-                                <strong>Avances Realizados:</strong>
-                                <div className="report-section-content">
-                                  {report.avances.map((avance, idx) => (
-                                    <div key={idx} className="report-section-item">{avance.descripcion}</div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                            {report.interferencias && report.interferencias.length > 0 && (
-                              <div className="report-row">
-                                <strong>Interferencias Responsabilidad Acción:</strong>
-                                <div className="report-section-content">
-                                  {report.interferencias.map((interferencia, idx) => (
-                                    <div key={idx} className="report-section-item">{interferencia.descripcion}</div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                            {report.detenciones && report.detenciones.length > 0 && (
-                              <div className="report-row">
-                                <strong>Detenciones por Responsabilidad Subcontrato:</strong>
-                                <div className="report-section-content">
-                                  {report.detenciones.map((detencion, idx) => (
-                                    <div key={idx} className="report-section-item">{detencion.descripcion}</div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                            {report.comentarios && report.comentarios.length > 0 && (
-                              <div className="report-row">
-                                <strong>Comentarios:</strong>
-                                <div className="report-section-content">
-                                  {report.comentarios.map((comentario, idx) => (
-                                    <div key={idx} className="report-section-item">{comentario.descripcion}</div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
+                        <li key={report._id || report.id} style={{
+                          background: theme === 'dark' ? '#232a36' : '#fff',
+                          borderRadius: 16,
+                          boxShadow: '0 2px 12px 0 rgba(44,62,80,0.10)',
+                          marginBottom: 32,
+                          padding: '32px 24px',
+                          border: theme === 'dark' ? '1.5px solid #3d4b5c' : '1.5px solid #e0e6ef',
+                          maxWidth: 900,
+                          marginLeft: 'auto',
+                          marginRight: 'auto',
+                        }}>
+                          <div style={{ marginBottom: 18 }}>
+                            <span style={{ fontWeight: 700, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', fontSize: 18 }}>Área:</span> <span style={{ fontWeight: 400 }}>{report.area}</span><br />
+                            <span style={{ fontWeight: 700, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', fontSize: 18 }}>Jornada:</span> <span style={{ fontWeight: 400 }}>{report.jornada}</span><br />
+                            <span style={{ fontWeight: 700, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', fontSize: 18 }}>Supervisor:</span> <span style={{ fontWeight: 400 }}>{report.supervisor}</span>
                           </div>
-                          <small style={{ color: '#7f8c8d' }}>Enviado el: {new Date(report.dateSubmitted).toLocaleString()}</small>
-                          <div style={{ marginTop: '1.2rem', textAlign: 'right' }}>
+                          <div style={{ fontWeight: 700, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', fontSize: 17, marginBottom: 8 }}>Equipo:</div>
+                          <div className="table-responsive" style={{ marginBottom: 18 }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', background: theme === 'dark' ? '#232a36' : '#fafdff', borderRadius: 8, overflow: 'hidden', boxShadow: '0 1px 6px 0 rgba(44,62,80,0.07)' }}>
+                              <thead>
+                                <tr style={{ background: theme === 'dark' ? '#273043' : '#f0f6fa' }}>
+                                  <th style={{ padding: '12px 8px', fontWeight: 700, fontSize: 15, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', border: '1px solid #bbb' }}>RUT</th>
+                                  <th style={{ padding: '12px 8px', fontWeight: 700, fontSize: 15, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', border: '1px solid #bbb' }}>NOMBRE</th>
+                                  <th style={{ padding: '12px 8px', fontWeight: 700, fontSize: 15, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', border: '1px solid #bbb' }}>CARGO</th>
+                                  <th style={{ padding: '12px 8px', fontWeight: 700, fontSize: 15, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', border: '1px solid #bbb' }}>CÓDIGO EQUIPO</th>
+                                  <th style={{ padding: '12px 8px', fontWeight: 700, fontSize: 15, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', border: '1px solid #bbb' }}>TIPO DE ASIST</th>
+                                  <th style={{ padding: '12px 8px', fontWeight: 700, fontSize: 15, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', border: '1px solid #bbb' }}>TRAMO</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {(report.team || []).map((row, idx) => (
+                                  <tr key={idx} style={{ background: idx % 2 === 0 ? (theme === 'dark' ? '#232a36' : '#f7fbfd') : (theme === 'dark' ? '#273043' : '#fff') }}>
+                                    <td style={{ border: '1px solid #bbb', padding: '10px 6px' }}>{row.rut}</td>
+                                    <td style={{ border: '1px solid #bbb', padding: '10px 6px' }}>{row.nombre}</td>
+                                    <td style={{ border: '1px solid #bbb', padding: '10px 6px' }}>{row.cargo}</td>
+                                    <td style={{ border: '1px solid #bbb', padding: '10px 6px' }}>{row.codigoEquipo}</td>
+                                    <td style={{ border: '1px solid #bbb', padding: '10px 6px' }}>{row.tipoAsist}</td>
+                                    <td style={{ border: '1px solid #bbb', padding: '10px 6px' }}>{row.tramo || (catalogTramos.find(t => t.id === row.tramoId || t._id === row.tramoId)?.nombre || '')}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                          {report.avances && report.avances.length > 0 && (
+                            <div style={{ marginBottom: 10 }}>
+                              <span style={{ fontWeight: 700, color: '#0984e3' }}>Avances Realizados:</span>
+                              <ul style={{ margin: '8px 0 0 0', padding: 0, listStyle: 'disc inside' }}>
+                                {report.avances.map((avance, idx) => (
+                                  <li key={idx} style={{ color: theme === 'dark' ? '#e0e6ef' : '#222', fontSize: 15 }}>{avance.descripcion}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          {report.interferencias && report.interferencias.length > 0 && (
+                            <div style={{ marginBottom: 10 }}>
+                              <span style={{ fontWeight: 700, color: '#d35400' }}>Interferencias Responsabilidad Acción:</span>
+                              <ul style={{ margin: '8px 0 0 0', padding: 0, listStyle: 'disc inside' }}>
+                                {report.interferencias.map((interferencia, idx) => (
+                                  <li key={idx} style={{ color: theme === 'dark' ? '#e0e6ef' : '#222', fontSize: 15 }}>{interferencia.descripcion}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          {report.detenciones && report.detenciones.length > 0 && (
+                            <div style={{ marginBottom: 10 }}>
+                              <span style={{ fontWeight: 700, color: '#c0392b' }}>Detenciones por Responsabilidad Subcontrato:</span>
+                              <ul style={{ margin: '8px 0 0 0', padding: 0, listStyle: 'disc inside' }}>
+                                {report.detenciones.map((detencion, idx) => (
+                                  <li key={idx} style={{ color: theme === 'dark' ? '#e0e6ef' : '#222', fontSize: 15 }}>{detencion.descripcion}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          {report.comentarios && report.comentarios.length > 0 && (
+                            <div style={{ marginBottom: 10 }}>
+                              <span style={{ fontWeight: 700, color: '#27ae60' }}>Comentarios:</span>
+                              <ul style={{ margin: '8px 0 0 0', padding: 0, listStyle: 'disc inside' }}>
+                                {report.comentarios.map((comentario, idx) => (
+                                  <li key={idx} style={{ color: theme === 'dark' ? '#e0e6ef' : '#222', fontSize: 15 }}>{comentario.descripcion}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 18 }}>
+                            <small style={{ color: theme === 'dark' ? '#7ed6df' : '#7f8c8d', fontSize: 14 }}>Enviado el: {new Date(report.dateSubmitted).toLocaleString()}</small>
                             <button
                               type="button"
                               onClick={() => { setShowDeleteModal(true); setReportToDelete(report._id || report.id); }}
                               className="btn-danger btn-delete-report"
                               title="Eliminar informe"
+                              style={{ minWidth: 120, fontSize: 16, borderRadius: 6, marginLeft: 16 }}
                             >
                               Eliminar
                             </button>
