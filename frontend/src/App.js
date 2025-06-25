@@ -272,25 +272,27 @@ const App = () => {
     }
   };
 
+  // Estado para el modal de confirmación de borrado
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [reportToDelete, setReportToDelete] = useState(null);
+
   // Eliminar informe
-  const handleDeleteReport = async (reportId) => {
-    if (!window.confirm('¿Estás seguro de que deseas eliminar este informe?')) return;
+  const handleDeleteReport = async () => {
+    if (!reportToDelete) return;
     setLoading(true);
     setNetworkError('');
     try {
-      // Asegúrate de que el ID es correcto y de tipo número
-      const id = typeof reportId === 'number' ? reportId : Number(reportId);
-      await axios.delete(`${API_URL}/reports/${id}`, {
+      await axios.delete(`${API_URL}/reports/${reportToDelete}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      // Refrescar la lista después de borrar
+      setShowDeleteModal(false);
+      setReportToDelete(null);
       if (role === 'admin') {
         await fetchAllReports(token);
       } else {
         await fetchReports(token);
       }
     } catch (error) {
-      // Mostrar el mensaje de error del backend si existe
       if (error.response && error.response.data && error.response.data.message) {
         alert('Error al eliminar el informe: ' + error.response.data.message);
       } else if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
@@ -714,7 +716,7 @@ const App = () => {
                             {report.avances && report.avances.length > 0 && (
                               <div>
                                 <strong>Avances Realizados:</strong>
-                                <div style={{ marginLeft: '16px', padding: '8px', background: theme === 'dark' ? '#273043' : '#f8f9fa', borderRadius: '4px' }}>
+                                <div style={{ marginLeft: '16px', padding: '8px', background: theme === 'dark' ? '#273043' : '#f9f9fa', borderRadius: '4px' }}>
                                   {report.avances.map((avance, idx) => (
                                     <div key={idx}>{avance.descripcion}</div>
                                   ))}
@@ -753,9 +755,10 @@ const App = () => {
                             )}
                           </div>
                           <small style={{ color: '#7f8c8d' }}>Enviado el: {new Date(report.dateSubmitted).toLocaleString()}</small>
+                          {/* Botón de eliminar informe */}
                           <button
                             type="button"
-                            onClick={() => handleDeleteReport(report._id || report.id)}
+                            onClick={() => { setShowDeleteModal(true); setReportToDelete(report._id || report.id); }}
                             className="btn-danger btn-delete-report"
                             title="Eliminar informe"
                           >
@@ -764,6 +767,18 @@ const App = () => {
                         </li>
                       ))}
                     </ul>
+                  )}
+                  {/* Modal de confirmación de borrado */}
+                  {showDeleteModal && (
+                    <div style={{position:'fixed',top:0,left:0,width:'100vw',height:'100vh',background:'rgba(0,0,0,0.4)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center'}}>
+                      <div style={{background:'#fff',padding:32,borderRadius:12,minWidth:300,boxShadow:'0 2px 16px 0 rgba(44,62,80,0.18)',textAlign:'center'}}>
+                        <h3>¿Estás seguro de que deseas eliminar este informe?</h3>
+                        <div style={{marginTop:24,display:'flex',gap:16,justifyContent:'center'}}>
+                          <button className="btn-danger" onClick={handleDeleteReport}>Eliminar</button>
+                          <button className="btn-primary" onClick={()=>{setShowDeleteModal(false);setReportToDelete(null);}}>Cancelar</button>
+                        </div>
+                      </div>
+                    </div>
                   )}
                   {/* Panel de administración (solo admin) */}
                   {role === 'admin' && (
