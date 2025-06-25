@@ -61,10 +61,6 @@ const Dashboard = ({ theme }) => {
             allowFullScreen
           />
         </div>
-        {/* Tercer iframe aquí */}
-        <div className="dashboard-iframe" style={iframeWrapperStyle}>
-          {/* Agrega aquí el src del tercer informe cuando lo tengas */}
-        </div>
       </div>
       <button
         style={{ marginTop: 24, padding: '10px 24px', fontSize: 16, borderRadius: 4, border: 'none', background: '#4F8A8B', color: '#fff', cursor: 'pointer' }}

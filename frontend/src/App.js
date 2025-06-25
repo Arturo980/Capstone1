@@ -3,6 +3,8 @@ import axios from 'axios';
 import './App.css';
 import Dashboard from './Dashboard';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
 
 const initialTeamRow = {
   rut: '',
@@ -185,7 +187,16 @@ const App = () => {
     }
     
     // Filtrar filas vacías
-    const filteredTeam = team.filter(row => Object.values(row).some(val => val));
+    const filteredTeam = team.filter(row => Object.values(row).some(val => val))
+      .map(row => {
+        // Buscar el nombre de la actividad según el id seleccionado
+        const actividadObj = catalogActivities.find(a => a.id === row.activityId || a._id === row.activityId);
+        console.log('Actividad buscada:', { activityId: row.activityId, actividadObj, catalogActivities });
+        return {
+          ...row,
+          actividad: actividadObj ? actividadObj.nombre : '',
+        };
+      });
     
     // Preparar datos simples (solo enviar si tienen contenido)
     const reportData = {
@@ -200,6 +211,8 @@ const App = () => {
     };
     
     console.log('Enviando datos:', reportData);
+    console.log('Equipo filtrado:', filteredTeam);
+    console.log('Catálogo de actividades actual:', catalogActivities);
     
     setLoading(true);
     setNetworkError('');
@@ -399,6 +412,41 @@ const App = () => {
     // eslint-disable-next-line
   }, [token]);
 
+  // Exportar informes a Excel (una fila por integrante del equipo, con nombre, rut y cargo separados)
+  const exportToExcel = () => {
+    if (!reports || reports.length === 0) return;
+    const data = [];
+    reports.forEach(report => {
+      (report.team || [{}]).forEach(row => {
+        data.push({
+          'Área': report.area,
+          'Jornada': report.jornada,
+          'Supervisor': report.supervisor,
+          'Fecha de Envío': new Date(report.dateSubmitted).toLocaleString(),
+          'Nombre Trabajador': row.nombre || '',
+          'RUT Trabajador': row.rut || '',
+          'Cargo Trabajador': row.cargo || '',
+          'Código Equipo': row.codigoEquipo || '',
+          'Tipo de Asistencia': row.tipoAsist || '',
+          'Tramo': row.tramo || (catalogTramos.find(t => t.id === row.tramoId || t._id === row.tramoId)?.nombre || ''),
+          'Actividad': (catalogActivities.find(a => a.id === row.activityId || a._id === row.activityId)?.nombre || row.activityId || ''),
+          'Hora Inicio': row.horaInicio || '',
+          'Hora Fin': row.horaFin || '',
+          'Horas Trabajadas': row.horaInicio && row.horaFin ? calcularHoras(row.horaInicio, row.horaFin) : '',
+          'Avances': (report.avances || []).map(a => a.descripcion).join('; '),
+          'Interferencias': (report.interferencias || []).map(i => i.descripcion).join('; '),
+          'Detenciones': (report.detenciones || []).map(d => d.descripcion).join('; '),
+          'Comentarios': (report.comentarios || []).map(c => c.descripcion).join('; ')
+        });
+      });
+    });
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Informes');
+    const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    saveAs(new Blob([excelBuffer], { type: 'application/octet-stream' }), 'informes.xlsx');
+  };
+
   return (
     <Router>
       {showInactivityModal && (
@@ -452,7 +500,9 @@ const App = () => {
         {/* FIN NUEVO */}
         <Routes>
           <Route path="/dashboard" element={
-            token && role === 'admin' ? <Dashboard theme={theme} /> : <div style={{padding:40, textAlign:'center'}}><h2>Acceso denegado</h2><p>Solo los administradores pueden ver el dashboard.</p></div>
+            token && role === 'admin' ? (
+              <Dashboard theme={theme} />
+            ) : <div style={{padding:40, textAlign:'center'}}><h2>Acceso denegado</h2><p>Solo los administradores pueden ver el dashboard.</p></div>
           } />
           <Route path="/" element={
             <div>
@@ -660,7 +710,7 @@ const App = () => {
                                     <select value={row.activityId || ''} onChange={e => handleTeamChange(idx, 'activityId', e.target.value)} className="input-table">
                                       <option value="">Selecciona</option>
                                       {catalogActivities.map(a => (
-                                        <option key={a.id} value={a.id}>{a.nombre}</option>
+                                        <option key={a._id || a.id} value={a._id || a.id}>{a.nombre}</option>
                                       ))}
                                     </select>
                                   </td>
@@ -729,7 +779,7 @@ const App = () => {
                     </div>
 
                     <div className="form-section">
-                      <h3>Interferencias Responsabilidad Acción</h3>
+                      <h3>Interferencias Responsabilidad Acciona</h3>
                       <textarea
                         value={interferencias}
                         onChange={e => setInterferencias(e.target.value)}
@@ -741,7 +791,7 @@ const App = () => {
                     </div>
 
                     <div className="form-section">
-                      <h3>Detenciones por Responsabilidad Subcontrato</h3>
+                      <h3>Detenciones Responsabilidad Subcontrato</h3>
                       <textarea
                         value={detenciones}
                         onChange={e => setDetenciones(e.target.value)}
@@ -767,6 +817,13 @@ const App = () => {
                     <button type="submit" className="btn-success">Enviar Informe</button>
                   </form>
                   <h2>{role === 'admin' ? 'Todos los Informes' : 'Mis Informes'}</h2>
+                  {role === 'admin' && reports.length > 0 && (
+                    <div style={{display:'flex',justifyContent:'flex-end',marginBottom:16}}>
+                      <button className="btn-primary" onClick={exportToExcel} style={{minWidth:160}}>
+                        Exportar a Excel
+                      </button>
+                    </div>
+                  )}
                   {reports.length === 0 ? (
                     <p>No hay informes para mostrar.</p>
                   ) : (
@@ -799,6 +856,7 @@ const App = () => {
                                   <th style={{ padding: '12px 8px', fontWeight: 700, fontSize: 15, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', border: '1px solid #bbb' }}>CÓDIGO EQUIPO</th>
                                   <th style={{ padding: '12px 8px', fontWeight: 700, fontSize: 15, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', border: '1px solid #bbb' }}>TIPO DE ASIST</th>
                                   <th style={{ padding: '12px 8px', fontWeight: 700, fontSize: 15, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', border: '1px solid #bbb' }}>TRAMO</th>
+                                  <th style={{ padding: '12px 8px', fontWeight: 700, fontSize: 15, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', border: '1px solid #bbb' }}>ACTIVIDAD</th>
                                 </tr>
                               </thead>
                               <tbody>
@@ -810,6 +868,7 @@ const App = () => {
                                     <td style={{ border: '1px solid #bbb', padding: '10px 6px' }}>{row.codigoEquipo}</td>
                                     <td style={{ border: '1px solid #bbb', padding: '10px 6px' }}>{row.tipoAsist}</td>
                                     <td style={{ border: '1px solid #bbb', padding: '10px 6px' }}>{row.tramo || (catalogTramos.find(t => t.id === row.tramoId || t._id === row.tramoId)?.nombre || '')}</td>
+                                    <td style={{ border: '1px solid #bbb', padding: '10px 6px' }}>{row.actividad || (catalogActivities.find(a => a.id === row.activityId || a._id === row.activityId)?.nombre || '')}</td>
                                   </tr>
                                 ))}
                               </tbody>
