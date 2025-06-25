@@ -615,7 +615,7 @@ const App = () => {
                           <button type="button" className="btn-primary" style={{ minWidth: 100 }} onClick={() => setAdminModal('tramo')}>Agregar Tramo</button>
                           <button type="button" className="btn-primary" style={{ minWidth: 100 }} onClick={() => setAdminModal('trabajador')}>Agregar Trabajador</button>
                           <button type="button" className="btn-primary" style={{ minWidth: 100 }} onClick={() => setAdminModal('supervisor')}>Agregar Supervisor</button>
-                          <button type="button" className="btn-secondary" style={{ minWidth: 100 }} onClick={() => setAdminModal('gestionarSupervisores')}>Gestionar Supervisores</button>
+                          <button type="button" className="btn-primary" style={{ minWidth: 100 }} onClick={() => setAdminModal('gestionarSupervisores')}>Gestionar Supervisores</button>
                         </div>
                       )}
                     </div>
@@ -1087,11 +1087,11 @@ const App = () => {
                                 alignItems: 'center', 
                                 padding: '12px', 
                                 margin: '8px 0', 
-                                background: '#f5f5f5', 
+                                background: theme === 'dark' ? '#273043' : '#f5f5f5', 
                                 borderRadius: '8px',
-                                border: '1px solid #ddd'
+                                border: theme === 'dark' ? '1px solid #3d4b5c' : '1px solid #ddd'
                               }}>
-                                <span style={{ fontWeight: '500' }}>{supervisor.nombre}</span>
+                                <span style={{ fontWeight: '500', color: theme === 'dark' ? '#e0e6ef' : '#333' }}>{supervisor.nombre}</span>
                                 <button 
                                   type="button" 
                                   className="btn-danger" 

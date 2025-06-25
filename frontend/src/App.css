@@ -691,3 +691,61 @@ li small {
     padding: 18px 4vw 18px 4vw;
   }
 }
+
+/* Estilos para modales en modo noche */
+.main-container.dark .modal-box {
+  background: #232a36;
+  color: #e0e6ef;
+  border: 1.5px solid #3d4b5c;
+}
+
+.main-container.dark .modal-close {
+  color: #7ed6df;
+}
+
+.main-container.dark .modal-close:hover {
+  color: #fff;
+}
+
+/* Estilos para elementos dentro de modales en modo noche */
+.main-container.dark .modal-box input,
+.main-container.dark .modal-box select,
+.main-container.dark .modal-box .input {
+  background: #273043;
+  color: #e0e6ef;
+  border: 1px solid #3d4b5c;
+}
+
+.main-container.dark .modal-box input:focus,
+.main-container.dark .modal-box select:focus {
+  border-color: #7ed6df;
+  box-shadow: 0 0 0 2px rgba(126, 214, 223, 0.2);
+}
+
+/* Botón secundario para mejor diferenciación */
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 12px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  min-width: 120px;
+}
+
+.btn-secondary:hover {
+  background-color: #5a6268;
+  transform: translateY(-1px);
+}
+
+.main-container.dark .btn-secondary {
+  background-color: #495057;
+  color: #e0e6ef;
+}
+
+.main-container.dark .btn-secondary:hover {
+  background-color: #3d4349;
+}
