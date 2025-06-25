@@ -56,6 +56,7 @@ const App = () => {
   const [catalogActivities, setCatalogActivities] = useState([]);
   const [catalogTramos, setCatalogTramos] = useState([]);
   const [catalogWorkers, setCatalogWorkers] = useState([]);
+  const [catalogSupervisors, setCatalogSupervisors] = useState([]);
 
   // 1. Obtener lista única de cargos existentes
   const uniqueCargos = Array.from(new Set(catalogWorkers.map(w => w.cargo))).filter(Boolean);
@@ -106,6 +107,8 @@ const App = () => {
       .then(res => setCatalogTramos(res.data)).catch(() => {});
     axios.get(`${API_URL}/catalog/workers`, { headers: { Authorization: `Bearer ${token}` } })
       .then(res => setCatalogWorkers(res.data)).catch(() => {});
+    axios.get(`${API_URL}/catalog/supervisors`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => setCatalogSupervisors(res.data)).catch(() => {});
   }, [token]);
 
   useEffect(() => {
@@ -610,7 +613,9 @@ const App = () => {
                         <div className="admin-panel" style={{ display: 'flex', gap: 16, marginBottom: 24, marginTop: 24, flexWrap: 'wrap', flexDirection: 'row', justifyContent: 'flex-start' }}>
                           <button type="button" className="btn-primary" style={{ minWidth: 100 }} onClick={() => setAdminModal('actividad')}>Agregar Actividad</button>
                           <button type="button" className="btn-primary" style={{ minWidth: 100 }} onClick={() => setAdminModal('tramo')}>Agregar Tramo</button>
-                          <button type="button" className="btn-primary" style={{ minWidth: 10 }} onClick={() => setAdminModal('trabajador')}>Agregar Trabajador</button>
+                          <button type="button" className="btn-primary" style={{ minWidth: 100 }} onClick={() => setAdminModal('trabajador')}>Agregar Trabajador</button>
+                          <button type="button" className="btn-primary" style={{ minWidth: 100 }} onClick={() => setAdminModal('supervisor')}>Agregar Supervisor</button>
+                          <button type="button" className="btn-secondary" style={{ minWidth: 100 }} onClick={() => setAdminModal('gestionarSupervisores')}>Gestionar Supervisores</button>
                         </div>
                       )}
                     </div>
@@ -638,8 +643,8 @@ const App = () => {
                       <div className="col">
                         <select className="input" value={supervisor} onChange={e => setSupervisor(e.target.value)}>
                           <option value="">Selecciona Supervisor</option>
-                          {catalogWorkers.filter(w => (w.cargo || '').toLowerCase().includes('supervisor')).map(w => (
-                            <option key={w._id || w.id} value={w.nombre}>{w.nombre}</option>
+                          {catalogSupervisors.map(s => (
+                            <option key={s._id || s.id} value={s.nombre}>{s.nombre}</option>
                           ))}
                         </select>
                       </div>
@@ -1039,6 +1044,81 @@ const App = () => {
                           {modalError && <div className="error-box">{modalError}</div>}
                           <button type="submit" className="btn-success" disabled={modalLoading}>{modalLoading ? 'Agregando...' : 'Confirmar'}</button>
                         </form>
+                      </div>
+                    </div>
+                  )}
+                  {adminModal === 'supervisor' && (
+                    <div className="modal-bg">
+                      <div className="modal-box">
+                        <button className="modal-close" onClick={() => { setAdminModal(null); setModalError(''); }}>×</button>
+                        <h2>Agregar Supervisor</h2>
+                        <form onSubmit={async e => {
+                          e.preventDefault();
+                          setModalLoading(true); setModalError('');
+                          const nombre = e.target.nombre.value.trim();
+                          if (!nombre) { setModalError('Debes ingresar un nombre.'); setModalLoading(false); return; }
+                          try {
+                            const res = await axios.post(`${API_URL}/catalog/supervisors`, { nombre }, { headers: { Authorization: `Bearer ${token}` } });
+                            setCatalogSupervisors(prev => [...prev, res.data]);
+                            setAdminModal(null);
+                          } catch (err) { setModalError('Error: ' + (err.response?.data?.message || err.message)); }
+                          setModalLoading(false);
+                        }}>
+                          <input name="nombre" type="text" className="input" placeholder="Nombre del supervisor" autoFocus />
+                          {modalError && <div className="error-box">{modalError}</div>}
+                          <button type="submit" className="btn-success" disabled={modalLoading}>{modalLoading ? 'Agregando...' : 'Confirmar'}</button>
+                        </form>
+                      </div>
+                    </div>
+                  )}
+                  {adminModal === 'gestionarSupervisores' && (
+                    <div className="modal-bg">
+                      <div className="modal-box" style={{ minWidth: '500px' }}>
+                        <button className="modal-close" onClick={() => { setAdminModal(null); setModalError(''); }}>×</button>
+                        <h2>Gestionar Supervisores</h2>
+                        {catalogSupervisors.length === 0 ? (
+                          <p>No hay supervisores registrados.</p>
+                        ) : (
+                          <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                            {catalogSupervisors.map(supervisor => (
+                              <div key={supervisor._id || supervisor.id} style={{ 
+                                display: 'flex', 
+                                justifyContent: 'space-between', 
+                                alignItems: 'center', 
+                                padding: '12px', 
+                                margin: '8px 0', 
+                                background: '#f5f5f5', 
+                                borderRadius: '8px',
+                                border: '1px solid #ddd'
+                              }}>
+                                <span style={{ fontWeight: '500' }}>{supervisor.nombre}</span>
+                                <button 
+                                  type="button" 
+                                  className="btn-danger" 
+                                  style={{ minWidth: '80px', fontSize: '14px' }}
+                                  onClick={async () => {
+                                    if (window.confirm(`¿Estás seguro de eliminar al supervisor "${supervisor.nombre}"?`)) {
+                                      try {
+                                        await axios.delete(`${API_URL}/catalog/supervisors/${supervisor._id || supervisor.id}`, {
+                                          headers: { Authorization: `Bearer ${token}` }
+                                        });
+                                        setCatalogSupervisors(prev => prev.filter(s => (s._id || s.id) !== (supervisor._id || supervisor.id)));
+                                      } catch (err) {
+                                        alert('Error al eliminar supervisor: ' + (err.response?.data?.message || err.message));
+                                      }
+                                    }
+                                  }}
+                                >
+                                  Eliminar
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {modalError && <div className="error-box">{modalError}</div>}
+                        <div style={{ marginTop: '20px', textAlign: 'center' }}>
+                          <button type="button" className="btn-primary" onClick={() => setAdminModal(null)}>Cerrar</button>
+                        </div>
                       </div>
                     </div>
                   )}

@@ -56,6 +56,9 @@ const workerSchema = new mongoose.Schema({
 });
 const Worker = mongoose.model('Worker', workerSchema);
 
+const supervisorSchema = new mongoose.Schema({ nombre: { type: String, required: true, unique: true } });
+const Supervisor = mongoose.model('Supervisor', supervisorSchema);
+
 // Middleware to authenticate user via JWT
 function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
@@ -321,10 +324,32 @@ app.delete('/catalog/workers/:id', authenticateToken, isAdmin, async (req, res) 
   } catch (e) { res.status(400).json({ message: e.message }); }
 });
 
-app.delete('/catalog/workers/:id', authenticateToken, isAdmin, async (req, res) => {
+// --- Catálogo: Supervisores ---
+app.get('/catalog/supervisors', authenticateToken, async (req, res) => {
+  const list = await Supervisor.find();
+  res.json(list);
+});
+app.post('/catalog/supervisors', authenticateToken, isAdmin, async (req, res) => {
   try {
-    await Worker.findByIdAndDelete(req.params.id);
-    res.json({ message: 'Eliminado' });
+    const { nombre } = req.body;
+    if (!nombre) return res.status(400).json({ message: 'Nombre requerido' });
+    const supervisor = new Supervisor({ nombre });
+    await supervisor.save();
+    res.status(201).json(supervisor);
+  } catch (e) { res.status(400).json({ message: e.message }); }
+});
+app.put('/catalog/supervisors/:id', authenticateToken, isAdmin, async (req, res) => {
+  try {
+    const { nombre } = req.body;
+    if (!nombre) return res.status(400).json({ message: 'Nombre requerido' });
+    const updated = await Supervisor.findByIdAndUpdate(req.params.id, { nombre }, { new: true });
+    res.json(updated);
+  } catch (e) { res.status(400).json({ message: e.message }); }
+});
+app.delete('/catalog/supervisors/:id', authenticateToken, isAdmin, async (req, res) => {
+  try {
+    await Supervisor.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Supervisor eliminado' });
   } catch (e) { res.status(400).json({ message: e.message }); }
 });
 
