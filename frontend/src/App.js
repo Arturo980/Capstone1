@@ -18,24 +18,6 @@ const initialTeamRow = {
   horaFin: ''
 };
 
-// Cambiar initialActivityRow para solo tener descripción - ahora será para avances
-const initialAdvanceRow = {
-  descripcion: ''
-};
-
-// Nuevas estructuras para las secciones adicionales
-const initialInterferenceRow = {
-  descripcion: ''
-};
-
-const initialStoppageRow = {
-  descripcion: ''
-};
-
-const initialCommentRow = {
-  descripcion: ''
-};
-
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000';
 
 const App = () => {
