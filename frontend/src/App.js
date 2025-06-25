@@ -351,6 +351,11 @@ const App = () => {
     return `${Math.floor(diff / 60)}:${(diff % 60).toString().padStart(2, '0')}`;
   }
 
+  // Estado para modals del panel admin
+  const [adminModal, setAdminModal] = useState(null); // 'actividad' | 'tramo' | 'trabajador' | null
+  const [modalLoading, setModalLoading] = useState(false);
+  const [modalError, setModalError] = useState('');
+
   return (
     <Router>
       <div className={`main-container${theme === 'dark' ? ' dark' : ''}`}>
@@ -438,7 +443,7 @@ const App = () => {
                         type="button"
                         className="btn-primary"
                         onClick={() => setShowRegister(v => !v)}
-                        style={{ minWidth: 180, marginRight: 12 }}
+                        style={{ minWidth: 100, marginRight: 12 }}
                       >
                         {showRegister ? 'Cerrar Registro' : 'Registrar Usuario'}
                       </button>
@@ -446,7 +451,7 @@ const App = () => {
                         type="button"
                         className="btn-primary"
                         onClick={() => setShowAdminPanel(v => !v)}
-                        style={{ minWidth: 180 }}
+                        style={{ minWidth: 100 }}
                       >
                         {showAdminPanel ? 'Ocultar Panel Admin' : 'Mostrar Panel Admin'}
                       </button>
@@ -497,56 +502,10 @@ const App = () => {
                       )}
                       {/* Panel de administración (solo admin, toggle) */}
                       {showAdminPanel && (
-                        <div className="admin-panel" style={{ display: 'flex', gap: 16, marginBottom: 24, marginTop: 24 }}>
-                          {/* Agregar Actividad */}
-                          <form onSubmit={async e => {
-                            e.preventDefault();
-                            if (!e.target.nombre.value.trim()) return;
-                            try {
-                              const res = await axios.post(`${API_URL}/catalog/activities`, { nombre: e.target.nombre.value }, { headers: { Authorization: `Bearer ${token}` } });
-                              setCatalogActivities(prev => [...prev, res.data]);
-                              e.target.reset();
-                            } catch (err) { alert('Error: ' + (err.response?.data?.message || err.message)); }
-                          }} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <input name="nombre" type="text" placeholder="Nueva actividad" className="input" />
-                            <button type="submit" className="btn-primary">Agregar Actividad</button>
-                          </form>
-                          {/* Agregar Tramo */}
-                          <form onSubmit={async e => {
-                            e.preventDefault();
-                            if (!e.target.nombre.value.trim()) return;
-                            try {
-                              const res = await axios.post(`${API_URL}/catalog/tramos`, { nombre: e.target.nombre.value }, { headers: { Authorization: `Bearer ${token}` } });
-                              setCatalogTramos(prev => [...prev, res.data]);
-                              e.target.reset();
-                            } catch (err) { alert('Error: ' + (err.response?.data?.message || err.message)); }
-                          }} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <input name="nombre" type="text" placeholder="Nuevo tramo" className="input" />
-                            <button type="submit" className="btn-primary">Agregar Tramo</button>
-                          </form>
-                          {/* Agregar Trabajador */}
-                          <form onSubmit={async e => {
-                            e.preventDefault();
-                            const nombre = e.target.nombre.value.trim();
-                            const rut = e.target.rut.value.trim();
-                            const cargo = e.target.cargo.value.trim();
-                            if (!nombre || !rut || !cargo) return;
-                            try {
-                              const res = await axios.post(`${API_URL}/catalog/workers`, { nombre, rut, cargo }, { headers: { Authorization: `Bearer ${token}` } });
-                              setCatalogWorkers(prev => [...prev, res.data]);
-                              e.target.reset();
-                            } catch (err) { alert('Error: ' + (err.response?.data?.message || err.message)); }
-                          }} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <input name="nombre" type="text" placeholder="Nombre Trabajador" className="input" />
-                            <input name="rut" type="text" placeholder="RUT" className="input" />
-                            <select name="cargo" className="input">
-                              <option value="">Selecciona Cargo</option>
-                              {catalogCargos.map(cargo => (
-                                <option key={cargo} value={cargo}>{cargo}</option>
-                              ))}
-                            </select>
-                            <button type="submit" className="btn-primary">Agregar Trabajador</button>
-                          </form>
+                        <div className="admin-panel" style={{ display: 'flex', gap: 16, marginBottom: 24, marginTop: 24, flexWrap: 'wrap', flexDirection: 'row', justifyContent: 'flex-start' }}>
+                          <button type="button" className="btn-primary" style={{ minWidth: 100 }} onClick={() => setAdminModal('actividad')}>Agregar Actividad</button>
+                          <button type="button" className="btn-primary" style={{ minWidth: 100 }} onClick={() => setAdminModal('tramo')}>Agregar Tramo</button>
+                          <button type="button" className="btn-primary" style={{ minWidth: 10 }} onClick={() => setAdminModal('trabajador')}>Agregar Trabajador</button>
                         </div>
                       )}
                     </div>
@@ -861,6 +820,104 @@ const App = () => {
                           <button className="btn-danger" onClick={handleDeleteReport}>Eliminar</button>
                           <button className="btn-primary" onClick={()=>{setShowDeleteModal(false);setReportToDelete(null);}}>Cancelar</button>
                         </div>
+                      </div>
+                    </div>
+                  )}
+                  {/* MODALS PANEL ADMIN */}
+                  {adminModal === 'actividad' && (
+                    <div className="modal-bg">
+                      <div className="modal-box">
+                        <button className="modal-close" onClick={() => { setAdminModal(null); setModalError(''); }}>×</button>
+                        <h2>Agregar Actividad</h2>
+                        <form onSubmit={async e => {
+                          e.preventDefault();
+                          setModalLoading(true); setModalError('');
+                          const nombre = e.target.nombre.value.trim();
+                          if (!nombre) { setModalError('Debes ingresar un nombre.'); setModalLoading(false); return; }
+                          try {
+                            const res = await axios.post(`${API_URL}/catalog/activities`, { nombre }, { headers: { Authorization: `Bearer ${token}` } });
+                            setCatalogActivities(prev => [...prev, res.data]);
+                            setAdminModal(null);
+                          } catch (err) { setModalError('Error: ' + (err.response?.data?.message || err.message)); }
+                          setModalLoading(false);
+                        }}>
+                          <input name="nombre" type="text" className="input" placeholder="Nombre de la actividad" autoFocus />
+                          {modalError && <div className="error-box">{modalError}</div>}
+                          <button type="submit" className="btn-success" disabled={modalLoading}>{modalLoading ? 'Agregando...' : 'Confirmar'}</button>
+                        </form>
+                      </div>
+                    </div>
+                  )}
+                  {adminModal === 'tramo' && (
+                    <div className="modal-bg">
+                      <div className="modal-box">
+                        <button className="modal-close" onClick={() => { setAdminModal(null); setModalError(''); }}>×</button>
+                        <h2>Agregar Tramo</h2>
+                        <form onSubmit={async e => {
+                          e.preventDefault();
+                          setModalLoading(true); setModalError('');
+                          const nombre = e.target.nombre.value.trim();
+                          if (!nombre) { setModalError('Debes ingresar un nombre.'); setModalLoading(false); return; }
+                          try {
+                            const res = await axios.post(`${API_URL}/catalog/tramos`, { nombre }, { headers: { Authorization: `Bearer ${token}` } });
+                            setCatalogTramos(prev => [...prev, res.data]);
+                            setAdminModal(null);
+                          } catch (err) { setModalError('Error: ' + (err.response?.data?.message || err.message)); }
+                          setModalLoading(false);
+                        }}>
+                          <input name="nombre" type="text" className="input" placeholder="Nombre del tramo" autoFocus />
+                          {modalError && <div className="error-box">{modalError}</div>}
+                          <button type="submit" className="btn-success" disabled={modalLoading}>{modalLoading ? 'Agregando...' : 'Confirmar'}</button>
+                        </form>
+                      </div>
+                    </div>
+                  )}
+                  {adminModal === 'trabajador' && (
+                    <div className="modal-bg">
+                      <div className="modal-box">
+                        <button className="modal-close" onClick={() => { setAdminModal(null); setModalError(''); }}>×</button>
+                        <h2>Agregar Trabajador</h2>
+                        <form onSubmit={async e => {
+                          e.preventDefault();
+                          setModalLoading(true); setModalError('');
+                          const apellidos = e.target.apellidos.value.trim();
+                          const nombres = e.target.nombres.value.trim();
+                          const rut = e.target.rut.value.trim();
+                          const cargo = e.target.cargo.value.trim();
+                          // Validación de RUT: solo formato 12345678-9
+                          const rutRegex = /^\d{7,8}-[\dkK]$/;
+                          if (!apellidos || !nombres || !rut || !cargo) { setModalError('Completa todos los campos.'); setModalLoading(false); return; }
+                          if (!rutRegex.test(rut)) {
+                            setModalError('El RUT debe estar en formato 12345678-9, sin puntos.');
+                            setModalLoading(false);
+                            return;
+                          }
+                          if (rut.includes('.')) {
+                            setModalError('No se aceptan puntos en el RUT.');
+                            setModalLoading(false);
+                            return;
+                          }
+                          // Unir apellidos y nombres, todo en mayúsculas
+                          const nombre = `${apellidos} ${nombres}`.toUpperCase();
+                          try {
+                            const res = await axios.post(`${API_URL}/catalog/workers`, { nombre, rut, cargo }, { headers: { Authorization: `Bearer ${token}` } });
+                            setCatalogWorkers(prev => [...prev, res.data]);
+                            setAdminModal(null);
+                          } catch (err) { setModalError('Error: ' + (err.response?.data?.message || err.message)); }
+                          setModalLoading(false);
+                        }}>
+                          <input name="apellidos" type="text" className="input" placeholder="Apellidos" autoFocus />
+                          <input name="nombres" type="text" className="input" placeholder="Nombres" />
+                          <input name="rut" type="text" className="input" placeholder="RUT (12345678-9)" />
+                          <select name="cargo" className="input">
+                            <option value="">Selecciona Cargo</option>
+                            {catalogCargos.map(cargo => (
+                              <option key={cargo} value={cargo}>{cargo}</option>
+                            ))}
+                          </select>
+                          {modalError && <div className="error-box">{modalError}</div>}
+                          <button type="submit" className="btn-success" disabled={modalLoading}>{modalLoading ? 'Agregando...' : 'Confirmar'}</button>
+                        </form>
                       </div>
                     </div>
                   )}
