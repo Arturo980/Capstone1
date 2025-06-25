@@ -681,33 +681,35 @@ const App = () => {
                             <div><strong>Supervisor:</strong> {report.supervisor}</div>
                             <div>
                               <strong>Equipo:</strong>
-                              <table>
-                                <thead>
-                                  <tr>
-                                    <th>RUT</th>
-                                    <th>NOMBRE</th>
-                                    <th>CARGO</th>
-                                    <th>CÓDIGO EQUIPO</th>
-                                    <th>TIPO DE ASIST</th>
-                                    <th>TRAMO</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {(report.team || []).map((row, idx) => (
-                                    <tr key={idx}>
-                                      <td>{row.rut}</td>
-                                      <td>{row.nombre}</td>
-                                      <td>{row.cargo}</td>
-                                      <td>{row.codigoEquipo}</td>
-                                      <td>{row.tipoAsist}</td>
-                                      <td>{
-                                        row.tramo ||
-                                        (catalogTramos.find(t => t.id === row.tramoId || t._id === row.tramoId)?.nombre || '')
-                                      }</td>
+                              <div className="table-responsive">
+                                <table>
+                                  <thead>
+                                    <tr>
+                                      <th>RUT</th>
+                                      <th>NOMBRE</th>
+                                      <th>CARGO</th>
+                                      <th>CÓDIGO EQUIPO</th>
+                                      <th>TIPO DE ASIST</th>
+                                      <th>TRAMO</th>
                                     </tr>
-                                  ))}
-                                </tbody>
-                              </table>
+                                  </thead>
+                                  <tbody>
+                                    {(report.team || []).map((row, idx) => (
+                                      <tr key={idx}>
+                                        <td>{row.rut}</td>
+                                        <td>{row.nombre}</td>
+                                        <td>{row.cargo}</td>
+                                        <td>{row.codigoEquipo}</td>
+                                        <td>{row.tipoAsist}</td>
+                                        <td>{
+                                          row.tramo ||
+                                          (catalogTramos.find(t => t.id === row.tramoId || t._id === row.tramoId)?.nombre || '')
+                                        }</td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
                             </div>
                             {report.avances && report.avances.length > 0 && (
                               <div>
@@ -722,7 +724,7 @@ const App = () => {
                             {report.interferencias && report.interferencias.length > 0 && (
                               <div>
                                 <strong>Interferencias Responsabilidad Acción:</strong>
-                                <div style={{ marginLeft: '16px', padding: '8px', background: theme === 'dark' ? '#273043' : '#f8f9fa', borderRadius: '4px' }}>
+                                <div style={{ marginLeft: '16px', padding: '8px', background: theme === 'dark' ? '#273043' : '#f9f9fa', borderRadius: '4px' }}>
                                   {report.interferencias.map((interferencia, idx) => (
                                     <div key={idx}>{interferencia.descripcion}</div>
                                   ))}
@@ -732,7 +734,7 @@ const App = () => {
                             {report.detenciones && report.detenciones.length > 0 && (
                               <div>
                                 <strong>Detenciones por Responsabilidad Subcontrato:</strong>
-                                <div style={{ marginLeft: '16px', padding: '8px', background: theme === 'dark' ? '#273043' : '#f8f9fa', borderRadius: '4px' }}>
+                                <div style={{ marginLeft: '16px', padding: '8px', background: theme === 'dark' ? '#273043' : '#f9f9fa', borderRadius: '4px' }}>
                                   {report.detenciones.map((detencion, idx) => (
                                     <div key={idx}>{detencion.descripcion}</div>
                                   ))}
@@ -742,7 +744,7 @@ const App = () => {
                             {report.comentarios && report.comentarios.length > 0 && (
                               <div>
                                 <strong>Comentarios:</strong>
-                                <div style={{ marginLeft: '16px', padding: '8px', background: theme === 'dark' ? '#273043' : '#f8f9fa', borderRadius: '4px' }}>
+                                <div style={{ marginLeft: '16px', padding: '8px', background: theme === 'dark' ? '#273043' : '#f9f9fa', borderRadius: '4px' }}>
                                   {report.comentarios.map((comentario, idx) => (
                                     <div key={idx}>{comentario.descripcion}</div>
                                   ))}
