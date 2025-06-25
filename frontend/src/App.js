@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './App.css';
 import Dashboard from './Dashboard';
-import { BrowserRouter as Router, Route, Link, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 
 const initialTeamRow = {
   rut: '',
@@ -45,6 +45,7 @@ const App = () => {
   const [area, setArea] = useState('');
   const [jornada, setJornada] = useState('');
   const [supervisor, setSupervisor] = useState('');
+  const [showAdminPanel, setShowAdminPanel] = useState(false); // NUEVO: Estado para el panel admin
 
   // NUEVO: Hooks para cargar catálogos
   const [catalogActivities, setCatalogActivities] = useState([]);
@@ -352,20 +353,43 @@ const App = () => {
   return (
     <Router>
       <div className={`main-container${theme === 'dark' ? ' dark' : ''}`}>
-        <div className="theme-toggle-row">
-          <button
-            type="button"
-            className="btn-theme-toggle"
-            onClick={toggleTheme}
-          >
-            {theme === 'light' ? '🌙 Modo Noche' : '☀️ Modo Día'}
-          </button>
-          {token && role === 'admin' && (
-            <Link to="/dashboard" className="btn-primary" style={{ marginLeft: 10 }}>
-              Ver Dashboard
-            </Link>
-          )}
-        </div>
+        {/* NUEVO: Barra de botones superior */}
+        {token && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+            {/* Izquierda: Solo Ver Dashboard si no está en /dashboard */}
+            <div style={{ display: 'flex', gap: 12 }}>
+              {role === 'admin' && !window.location.pathname.startsWith('/dashboard') && (
+                <button
+                  type="button"
+                  className="btn-primary"
+                  style={{ minWidth: 120 }}
+                  onClick={() => window.location.href = '/dashboard'}
+                >
+                  Ver Dashboard
+                </button>
+              )}
+            </div>
+            {/* Derecha: Modo Noche y Cerrar Sesión (siempre visibles) */}
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={toggleTheme}
+                style={{ minWidth: 120 }}
+              >
+                {theme === 'light' ? '🌙 Modo Noche' : '☀️ Modo Día'}
+              </button>
+              <button
+                onClick={handleLogout}
+                className="btn-danger"
+                style={{ minWidth: 120 }}
+              >
+                Cerrar Sesión
+              </button>
+            </div>
+          </div>
+        )}
+        {/* FIN NUEVO */}
         <Routes>
           <Route path="/dashboard" element={
             token && role === 'admin' ? <Dashboard /> : <div style={{padding:40, textAlign:'center'}}><h2>Acceso denegado</h2><p>Solo los administradores pueden ver el dashboard.</p></div>
@@ -406,72 +430,130 @@ const App = () => {
                 </div>
               ) : (
                 <>
+                  {/* Botón Registrar Usuario sobre Crear Informe */}
+                  {role === 'admin' && !window.location.pathname.startsWith('/dashboard') && (
+                    <div style={{ marginBottom: 24 }}>
+                      <button
+                        type="button"
+                        className="btn-primary"
+                        onClick={() => setShowRegister(v => !v)}
+                        style={{ minWidth: 180, marginRight: 12 }}
+                      >
+                        {showRegister ? 'Cerrar Registro' : 'Registrar Usuario'}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-primary"
+                        onClick={() => setShowAdminPanel(v => !v)}
+                        style={{ minWidth: 180 }}
+                      >
+                        {showAdminPanel ? 'Ocultar Panel Admin' : 'Mostrar Panel Admin'}
+                      </button>
+                      {showRegister && (
+                        <form className="register-box" onSubmit={handleRegister} style={{ marginTop: 18 }}>
+                          <h2>Registrar Usuario</h2>
+                          <div className="row">
+                            <div className="col">
+                              <input
+                                type="text"
+                                placeholder="Usuario"
+                                value={regUsername}
+                                onChange={e => setRegUsername(e.target.value)}
+                                className="input"
+                              />
+                            </div>
+                            <div className="col">
+                              <input
+                                type="password"
+                                placeholder="Contraseña"
+                                value={regPassword}
+                                onChange={e => setRegPassword(e.target.value)}
+                                className="input"
+                              />
+                            </div>
+                            <div className="col">
+                              <select
+                                value={regRole}
+                                onChange={e => setRegRole(e.target.value)}
+                                className="input"
+                              >
+                                <option value="user">Usuario</option>
+                                <option value="admin">Administrador</option>
+                              </select>
+                            </div>
+                            <div className="col">
+                              <button
+                                type="submit"
+                                className="btn-success"
+                                disabled={registerLoading}
+                                style={{ minWidth: 120 }}
+                              >
+                                {registerLoading ? 'Registrando...' : 'Registrar'}
+                              </button>
+                            </div>
+                          </div>
+                        </form>
+                      )}
+                      {/* Panel de administración (solo admin, toggle) */}
+                      {showAdminPanel && (
+                        <div className="admin-panel" style={{ display: 'flex', gap: 16, marginBottom: 24, marginTop: 24 }}>
+                          {/* Agregar Actividad */}
+                          <form onSubmit={async e => {
+                            e.preventDefault();
+                            if (!e.target.nombre.value.trim()) return;
+                            try {
+                              const res = await axios.post(`${API_URL}/catalog/activities`, { nombre: e.target.nombre.value }, { headers: { Authorization: `Bearer ${token}` } });
+                              setCatalogActivities(prev => [...prev, res.data]);
+                              e.target.reset();
+                            } catch (err) { alert('Error: ' + (err.response?.data?.message || err.message)); }
+                          }} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <input name="nombre" type="text" placeholder="Nueva actividad" className="input" />
+                            <button type="submit" className="btn-primary">Agregar Actividad</button>
+                          </form>
+                          {/* Agregar Tramo */}
+                          <form onSubmit={async e => {
+                            e.preventDefault();
+                            if (!e.target.nombre.value.trim()) return;
+                            try {
+                              const res = await axios.post(`${API_URL}/catalog/tramos`, { nombre: e.target.nombre.value }, { headers: { Authorization: `Bearer ${token}` } });
+                              setCatalogTramos(prev => [...prev, res.data]);
+                              e.target.reset();
+                            } catch (err) { alert('Error: ' + (err.response?.data?.message || err.message)); }
+                          }} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <input name="nombre" type="text" placeholder="Nuevo tramo" className="input" />
+                            <button type="submit" className="btn-primary">Agregar Tramo</button>
+                          </form>
+                          {/* Agregar Trabajador */}
+                          <form onSubmit={async e => {
+                            e.preventDefault();
+                            const nombre = e.target.nombre.value.trim();
+                            const rut = e.target.rut.value.trim();
+                            const cargo = e.target.cargo.value.trim();
+                            if (!nombre || !rut || !cargo) return;
+                            try {
+                              const res = await axios.post(`${API_URL}/catalog/workers`, { nombre, rut, cargo }, { headers: { Authorization: `Bearer ${token}` } });
+                              setCatalogWorkers(prev => [...prev, res.data]);
+                              e.target.reset();
+                            } catch (err) { alert('Error: ' + (err.response?.data?.message || err.message)); }
+                          }} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <input name="nombre" type="text" placeholder="Nombre Trabajador" className="input" />
+                            <input name="rut" type="text" placeholder="RUT" className="input" />
+                            <select name="cargo" className="input">
+                              <option value="">Selecciona Cargo</option>
+                              {catalogCargos.map(cargo => (
+                                <option key={cargo} value={cargo}>{cargo}</option>
+                              ))}
+                            </select>
+                            <button type="submit" className="btn-primary">Agregar Trabajador</button>
+                          </form>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {/* Sección Crear Informe */}
                   <div className="header-row">
                     <h2>Crear Informe</h2>
-                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                      {role === 'admin' && (
-                        <button
-                          type="button"
-                          className="btn-primary"
-                          onClick={() => setShowRegister(v => !v)}
-                          style={{ minWidth: 120 }}
-                        >
-                          {showRegister ? 'Cerrar Registro' : 'Registrar Usuario'}
-                        </button>
-                      )}
-                      <button
-                        onClick={handleLogout}
-                        className="btn-danger"
-                      >
-                        Cerrar Sesión
-                      </button>
-                    </div>
                   </div>
-                  {role === 'admin' && showRegister && (
-                    <form className="register-box" onSubmit={handleRegister}>
-                      <h2>Registrar Usuario</h2>
-                      <div className="row">
-                        <div className="col">
-                          <input
-                            type="text"
-                            placeholder="Usuario"
-                            value={regUsername}
-                            onChange={e => setRegUsername(e.target.value)}
-                            className="input"
-                          />
-                        </div>
-                        <div className="col">
-                          <input
-                            type="password"
-                            placeholder="Contraseña"
-                            value={regPassword}
-                            onChange={e => setRegPassword(e.target.value)}
-                            className="input"
-                          />
-                        </div>
-                        <div className="col">
-                          <select
-                            value={regRole}
-                            onChange={e => setRegRole(e.target.value)}
-                            className="input"
-                          >
-                            <option value="user">Usuario</option>
-                            <option value="admin">Administrador</option>
-                          </select>
-                        </div>
-                        <div className="col" style={{ display: 'flex', alignItems: 'center' }}>
-                          <button
-                            type="submit"
-                            className="btn-success"
-                            disabled={registerLoading}
-                            style={{ minWidth: 120 }}
-                          >
-                            {registerLoading ? 'Registrando...' : 'Registrar'}
-                          </button>
-                        </div>
-                      </div>
-                    </form>
-                  )}
                   <form
                     onSubmit={e => { e.preventDefault(); handleReportSubmit(); }}
                     className="form-section"
@@ -677,11 +759,11 @@ const App = () => {
                     <ul>
                       {reports.map((report) => (
                         <li key={report._id || report.id}>
-                          <div style={{ marginBottom: '8px', paddingLeft: '8px', borderLeft: '3px solid #3498db' }}>
-                            <div><strong>Área:</strong> {report.area}</div>
-                            <div><strong>Jornada:</strong> {report.jornada}</div>
-                            <div><strong>Supervisor:</strong> {report.supervisor}</div>
-                            <div>
+                          <div className="report-block">
+                            <div className="report-row"><strong>Área:</strong> {report.area}</div>
+                            <div className="report-row"><strong>Jornada:</strong> {report.jornada}</div>
+                            <div className="report-row"><strong>Supervisor:</strong> {report.supervisor}</div>
+                            <div className="report-row">
                               <strong>Equipo:</strong>
                               <div className="table-responsive">
                                 <table>
@@ -714,56 +796,57 @@ const App = () => {
                               </div>
                             </div>
                             {report.avances && report.avances.length > 0 && (
-                              <div>
+                              <div className="report-row">
                                 <strong>Avances Realizados:</strong>
-                                <div style={{ marginLeft: '16px', padding: '8px', background: theme === 'dark' ? '#273043' : '#f9f9fa', borderRadius: '4px' }}>
+                                <div className="report-section-content">
                                   {report.avances.map((avance, idx) => (
-                                    <div key={idx}>{avance.descripcion}</div>
+                                    <div key={idx} className="report-section-item">{avance.descripcion}</div>
                                   ))}
                                 </div>
                               </div>
                             )}
                             {report.interferencias && report.interferencias.length > 0 && (
-                              <div>
+                              <div className="report-row">
                                 <strong>Interferencias Responsabilidad Acción:</strong>
-                                <div style={{ marginLeft: '16px', padding: '8px', background: theme === 'dark' ? '#273043' : '#f9f9fa', borderRadius: '4px' }}>
+                                <div className="report-section-content">
                                   {report.interferencias.map((interferencia, idx) => (
-                                    <div key={idx}>{interferencia.descripcion}</div>
+                                    <div key={idx} className="report-section-item">{interferencia.descripcion}</div>
                                   ))}
                                 </div>
                               </div>
                             )}
                             {report.detenciones && report.detenciones.length > 0 && (
-                              <div>
+                              <div className="report-row">
                                 <strong>Detenciones por Responsabilidad Subcontrato:</strong>
-                                <div style={{ marginLeft: '16px', padding: '8px', background: theme === 'dark' ? '#273043' : '#f9f9fa', borderRadius: '4px' }}>
+                                <div className="report-section-content">
                                   {report.detenciones.map((detencion, idx) => (
-                                    <div key={idx}>{detencion.descripcion}</div>
+                                    <div key={idx} className="report-section-item">{detencion.descripcion}</div>
                                   ))}
                                 </div>
                               </div>
                             )}
                             {report.comentarios && report.comentarios.length > 0 && (
-                              <div>
+                              <div className="report-row">
                                 <strong>Comentarios:</strong>
-                                <div style={{ marginLeft: '16px', padding: '8px', background: theme === 'dark' ? '#273043' : '#f9f9fa', borderRadius: '4px' }}>
+                                <div className="report-section-content">
                                   {report.comentarios.map((comentario, idx) => (
-                                    <div key={idx}>{comentario.descripcion}</div>
+                                    <div key={idx} className="report-section-item">{comentario.descripcion}</div>
                                   ))}
                                 </div>
                               </div>
                             )}
                           </div>
                           <small style={{ color: '#7f8c8d' }}>Enviado el: {new Date(report.dateSubmitted).toLocaleString()}</small>
-                          {/* Botón de eliminar informe */}
-                          <button
-                            type="button"
-                            onClick={() => { setShowDeleteModal(true); setReportToDelete(report._id || report.id); }}
-                            className="btn-danger btn-delete-report"
-                            title="Eliminar informe"
-                          >
-                            Eliminar
-                          </button>
+                          <div style={{ marginTop: '1.2rem', textAlign: 'right' }}>
+                            <button
+                              type="button"
+                              onClick={() => { setShowDeleteModal(true); setReportToDelete(report._id || report.id); }}
+                              className="btn-danger btn-delete-report"
+                              title="Eliminar informe"
+                            >
+                              Eliminar
+                            </button>
+                          </div>
                         </li>
                       ))}
                     </ul>
@@ -778,60 +861,6 @@ const App = () => {
                           <button className="btn-primary" onClick={()=>{setShowDeleteModal(false);setReportToDelete(null);}}>Cancelar</button>
                         </div>
                       </div>
-                    </div>
-                  )}
-                  {/* Panel de administración (solo admin) */}
-                  {role === 'admin' && (
-                    <div className="admin-panel" style={{ display: 'flex', gap: 16, marginBottom: 24 }}>
-                      {/* Agregar Actividad */}
-                      <form onSubmit={async e => {
-                        e.preventDefault();
-                        if (!e.target.nombre.value.trim()) return;
-                        try {
-                          const res = await axios.post(`${API_URL}/catalog/activities`, { nombre: e.target.nombre.value }, { headers: { Authorization: `Bearer ${token}` } });
-                          setCatalogActivities(prev => [...prev, res.data]);
-                          e.target.reset();
-                        } catch (err) { alert('Error: ' + (err.response?.data?.message || err.message)); }
-                      }} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <input name="nombre" type="text" placeholder="Nueva actividad" className="input" />
-                        <button type="submit" className="btn-primary">Agregar Actividad</button>
-                      </form>
-                      {/* Agregar Tramo */}
-                      <form onSubmit={async e => {
-                        e.preventDefault();
-                        if (!e.target.nombre.value.trim()) return;
-                        try {
-                          const res = await axios.post(`${API_URL}/catalog/tramos`, { nombre: e.target.nombre.value }, { headers: { Authorization: `Bearer ${token}` } });
-                          setCatalogTramos(prev => [...prev, res.data]);
-                          e.target.reset();
-                        } catch (err) { alert('Error: ' + (err.response?.data?.message || err.message)); }
-                      }} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <input name="nombre" type="text" placeholder="Nuevo tramo" className="input" />
-                        <button type="submit" className="btn-primary">Agregar Tramo</button>
-                      </form>
-                      {/* Agregar Trabajador */}
-                      <form onSubmit={async e => {
-                        e.preventDefault();
-                        const nombre = e.target.nombre.value.trim();
-                        const rut = e.target.rut.value.trim();
-                        const cargo = e.target.cargo.value.trim();
-                        if (!nombre || !rut || !cargo) return;
-                        try {
-                          const res = await axios.post(`${API_URL}/catalog/workers`, { nombre, rut, cargo }, { headers: { Authorization: `Bearer ${token}` } });
-                          setCatalogWorkers(prev => [...prev, res.data]);
-                          e.target.reset();
-                        } catch (err) { alert('Error: ' + (err.response?.data?.message || err.message)); }
-                      }} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <input name="nombre" type="text" placeholder="Nombre Trabajador" className="input" />
-                        <input name="rut" type="text" placeholder="RUT" className="input" />
-                        <select name="cargo" className="input">
-                          <option value="">Selecciona Cargo</option>
-                          {catalogCargos.map(cargo => (
-                            <option key={cargo} value={cargo}>{cargo}</option>
-                          ))}
-                        </select>
-                        <button type="submit" className="btn-primary">Agregar Trabajador</button>
-                      </form>
                     </div>
                   )}
                 </>
