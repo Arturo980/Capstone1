@@ -61,6 +61,7 @@ const App = () => {
   // 1. Obtener lista única de cargos existentes
   const uniqueCargos = Array.from(new Set(catalogWorkers.map(w => w.cargo))).filter(Boolean);
   const [catalogCargos, setCatalogCargos] = useState(uniqueCargos);
+  
   useEffect(() => {
     setCatalogCargos(Array.from(new Set(catalogWorkers.map(w => w.cargo))).filter(Boolean));
   }, [catalogWorkers]);
@@ -1055,16 +1056,34 @@ const App = () => {
                         <form onSubmit={async e => {
                           e.preventDefault();
                           setModalLoading(true); setModalError('');
-                          const nombre = e.target.nombre.value.trim();
-                          if (!nombre) { setModalError('Debes ingresar un nombre.'); setModalLoading(false); return; }
+                          const apellidos = e.target.apellidos.value.trim();
+                          const nombres = e.target.nombres.value.trim();
+                          const rut = e.target.rut.value.trim();
+                          // Validación de RUT: solo formato 12345678-9
+                          const rutRegex = /^\d{7,8}-[\dkK]$/;
+                          if (!apellidos || !nombres || !rut) { setModalError('Completa todos los campos.'); setModalLoading(false); return; }
+                          if (!rutRegex.test(rut)) {
+                            setModalError('El RUT debe estar en formato 12345678-9, sin puntos.');
+                            setModalLoading(false);
+                            return;
+                          }
+                          if (rut.includes('.')) {
+                            setModalError('No se aceptan puntos en el RUT.');
+                            setModalLoading(false);
+                            return;
+                          }
+                          // Unir apellidos y nombres, todo en mayúsculas
+                          const nombre = `${apellidos} ${nombres}`.toUpperCase();
                           try {
-                            const res = await axios.post(`${API_URL}/catalog/supervisors`, { nombre }, { headers: { Authorization: `Bearer ${token}` } });
+                            const res = await axios.post(`${API_URL}/catalog/supervisors`, { nombre, rut }, { headers: { Authorization: `Bearer ${token}` } });
                             setCatalogSupervisors(prev => [...prev, res.data]);
                             setAdminModal(null);
                           } catch (err) { setModalError('Error: ' + (err.response?.data?.message || err.message)); }
                           setModalLoading(false);
                         }}>
-                          <input name="nombre" type="text" className="input" placeholder="Nombre del supervisor" autoFocus />
+                          <input name="apellidos" type="text" className="input" placeholder="Apellidos" autoFocus />
+                          <input name="nombres" type="text" className="input" placeholder="Nombres" />
+                          <input name="rut" type="text" className="input" placeholder="RUT (12345678-9)" />
                           {modalError && <div className="error-box">{modalError}</div>}
                           <button type="submit" className="btn-success" disabled={modalLoading}>{modalLoading ? 'Agregando...' : 'Confirmar'}</button>
                         </form>
@@ -1073,46 +1092,58 @@ const App = () => {
                   )}
                   {adminModal === 'gestionarSupervisores' && (
                     <div className="modal-bg">
-                      <div className="modal-box" style={{ minWidth: '500px' }}>
+                      <div className="modal-box" style={{ minWidth: '600px', maxWidth: '90vw' }}>
                         <button className="modal-close" onClick={() => { setAdminModal(null); setModalError(''); }}>×</button>
                         <h2>Gestionar Supervisores</h2>
                         {catalogSupervisors.length === 0 ? (
                           <p>No hay supervisores registrados.</p>
                         ) : (
-                          <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
-                            {catalogSupervisors.map(supervisor => (
-                              <div key={supervisor._id || supervisor.id} style={{ 
-                                display: 'flex', 
-                                justifyContent: 'space-between', 
-                                alignItems: 'center', 
-                                padding: '12px', 
-                                margin: '8px 0', 
-                                background: theme === 'dark' ? '#273043' : '#f5f5f5', 
-                                borderRadius: '8px',
-                                border: theme === 'dark' ? '1px solid #3d4b5c' : '1px solid #ddd'
-                              }}>
-                                <span style={{ fontWeight: '500', color: theme === 'dark' ? '#e0e6ef' : '#333' }}>{supervisor.nombre}</span>
-                                <button 
-                                  type="button" 
-                                  className="btn-danger" 
-                                  style={{ minWidth: '80px', fontSize: '14px' }}
-                                  onClick={async () => {
-                                    if (window.confirm(`¿Estás seguro de eliminar al supervisor "${supervisor.nombre}"?`)) {
-                                      try {
-                                        await axios.delete(`${API_URL}/catalog/supervisors/${supervisor._id || supervisor.id}`, {
-                                          headers: { Authorization: `Bearer ${token}` }
-                                        });
-                                        setCatalogSupervisors(prev => prev.filter(s => (s._id || s.id) !== (supervisor._id || supervisor.id)));
-                                      } catch (err) {
-                                        alert('Error al eliminar supervisor: ' + (err.response?.data?.message || err.message));
-                                      }
-                                    }
-                                  }}
-                                >
-                                  Eliminar
-                                </button>
-                              </div>
-                            ))}
+                          <div style={{ maxHeight: '500px', overflowY: 'auto', overflowX: 'auto' }}>
+                            <table style={{ 
+                              width: '100%', 
+                              borderCollapse: 'collapse', 
+                              background: theme === 'dark' ? '#232a36' : '#fafdff', 
+                              borderRadius: '8px', 
+                              overflow: 'hidden', 
+                              boxShadow: '0 1px 6px 0 rgba(44,62,80,0.07)' 
+                            }}>
+                              <thead>
+                                <tr style={{ background: theme === 'dark' ? '#273043' : '#f0f6fa' }}>
+                                  <th style={{ padding: '12px 8px', fontWeight: 700, fontSize: 14, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', border: '1px solid #bbb', textAlign: 'left' }}>NOMBRE</th>
+                                  <th style={{ padding: '12px 8px', fontWeight: 700, fontSize: 14, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', border: '1px solid #bbb', textAlign: 'left' }}>RUT</th>
+                                  <th style={{ padding: '12px 8px', fontWeight: 700, fontSize: 14, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', border: '1px solid #bbb', textAlign: 'center' }}>ACCIÓN</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {catalogSupervisors.map((supervisor, idx) => (
+                                  <tr key={supervisor._id || supervisor.id} style={{ background: idx % 2 === 0 ? (theme === 'dark' ? '#232a36' : '#f7fbfd') : (theme === 'dark' ? '#273043' : '#fff') }}>
+                                    <td style={{ border: '1px solid #bbb', padding: '10px 8px', fontSize: '14px' }}>{supervisor.nombre}</td>
+                                    <td style={{ border: '1px solid #bbb', padding: '10px 8px', fontSize: '14px' }}>{supervisor.rut}</td>
+                                    <td style={{ border: '1px solid #bbb', padding: '10px 8px', textAlign: 'center' }}>
+                                      <button 
+                                        type="button" 
+                                        className="btn-danger" 
+                                        style={{ minWidth: '80px', fontSize: '12px', padding: '6px 12px' }}
+                                        onClick={async () => {
+                                          if (window.confirm(`¿Estás seguro de eliminar al supervisor "${supervisor.nombre}"?`)) {
+                                            try {
+                                              await axios.delete(`${API_URL}/catalog/supervisors/${supervisor._id || supervisor.id}`, {
+                                                headers: { Authorization: `Bearer ${token}` }
+                                              });
+                                              setCatalogSupervisors(prev => prev.filter(s => (s._id || s.id) !== (supervisor._id || supervisor.id)));
+                                            } catch (err) {
+                                              alert('Error al eliminar supervisor: ' + (err.response?.data?.message || err.message));
+                                            }
+                                          }
+                                        }}
+                                      >
+                                        Eliminar
+                                      </button>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
                           </div>
                         )}
                         {modalError && <div className="error-box">{modalError}</div>}

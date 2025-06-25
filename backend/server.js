@@ -56,7 +56,10 @@ const workerSchema = new mongoose.Schema({
 });
 const Worker = mongoose.model('Worker', workerSchema);
 
-const supervisorSchema = new mongoose.Schema({ nombre: { type: String, required: true, unique: true } });
+const supervisorSchema = new mongoose.Schema({
+  nombre: { type: String, required: true },
+  rut: { type: String, required: true, unique: true }
+});
 const Supervisor = mongoose.model('Supervisor', supervisorSchema);
 
 // Middleware to authenticate user via JWT
@@ -331,18 +334,18 @@ app.get('/catalog/supervisors', authenticateToken, async (req, res) => {
 });
 app.post('/catalog/supervisors', authenticateToken, isAdmin, async (req, res) => {
   try {
-    const { nombre } = req.body;
-    if (!nombre) return res.status(400).json({ message: 'Nombre requerido' });
-    const supervisor = new Supervisor({ nombre });
+    const { nombre, rut } = req.body;
+    if (!nombre || !rut) return res.status(400).json({ message: 'Nombre y RUT son requeridos' });
+    const supervisor = new Supervisor({ nombre, rut });
     await supervisor.save();
     res.status(201).json(supervisor);
   } catch (e) { res.status(400).json({ message: e.message }); }
 });
 app.put('/catalog/supervisors/:id', authenticateToken, isAdmin, async (req, res) => {
   try {
-    const { nombre } = req.body;
-    if (!nombre) return res.status(400).json({ message: 'Nombre requerido' });
-    const updated = await Supervisor.findByIdAndUpdate(req.params.id, { nombre }, { new: true });
+    const { nombre, rut } = req.body;
+    if (!nombre || !rut) return res.status(400).json({ message: 'Nombre y RUT son requeridos' });
+    const updated = await Supervisor.findByIdAndUpdate(req.params.id, { nombre, rut }, { new: true });
     res.json(updated);
   } catch (e) { res.status(400).json({ message: e.message }); }
 });
