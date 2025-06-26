@@ -913,97 +913,138 @@ const App = () => {
                               ) : (
                                 <div>
                                   <div style={{ 
-                                    marginBottom: '16px', 
-                                    color: theme === 'dark' ? '#b8c5d1' : '#6c757d',
-                                    fontSize: '14px',
-                                    fontWeight: '500'
+                                    marginBottom: '20px', 
+                                    padding: '12px 20px',
+                                    background: theme === 'dark' ? '#273043' : '#e8f4f8',
+                                    borderRadius: '8px',
+                                    border: theme === 'dark' ? '1px solid #3d4b5c' : '1px solid #b8e6ff',
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center'
                                   }}>
-                                    Total de actividades: {catalogActivities.length}
+                                    <div style={{
+                                      color: theme === 'dark' ? '#7ed6df' : '#0984e3',
+                                      fontSize: '16px',
+                                      fontWeight: '600',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '8px'
+                                    }}>
+                                      <span style={{ fontSize: '20px' }}>📋</span>
+                                      Total de actividades: {catalogActivities.length}
+                                    </div>
                                   </div>
-                                  <div className="admin-table-container" style={{ 
-                                    maxHeight: '400px', 
+                                  <div style={{ 
+                                    maxHeight: '500px', 
                                     overflowY: 'auto',
                                     overflowX: 'auto',
-                                    borderRadius: '8px',
-                                    border: theme === 'dark' ? '1px solid #3d4b5c' : '1px solid #e0e6ef'
+                                    borderRadius: '12px',
+                                    border: theme === 'dark' ? '2px solid #3d4b5c' : '2px solid #e0e6ef',
+                                    boxShadow: '0 4px 16px 0 rgba(44,62,80,0.08)'
                                   }}>
                                     <table style={{ 
                                       width: '100%',
-                                      minWidth: '300px',
+                                      minWidth: '500px',
                                       borderCollapse: 'collapse', 
                                       background: theme === 'dark' ? '#232a36' : '#ffffff',
-                                      tableLayout: 'fixed'
+                                      tableLayout: 'auto'
                                     }}>
                                       <thead>
-                                        <tr style={{ background: theme === 'dark' ? '#273043' : '#f8f9fa' }}>
+                                        <tr style={{ 
+                                          background: theme === 'dark' ? '#273043' : '#f8f9fa',
+                                          borderBottom: theme === 'dark' ? '2px solid #3d4b5c' : '2px solid #e0e6ef'
+                                        }}>
                                           <th style={{ 
-                                            padding: '12px 16px', 
+                                            padding: '16px 20px', 
                                             fontWeight: 700, 
-                                            fontSize: '13px', 
+                                            fontSize: '14px', 
                                             color: theme === 'dark' ? '#7ed6df' : '#2c3e50', 
                                             border: 'none',
                                             textAlign: 'left',
-                                            letterSpacing: '0.3px',
-                                            width: '65%'
-                                          }}>NOMBRE</th>
+                                            letterSpacing: '0.5px',
+                                            textTransform: 'uppercase',
+                                            minWidth: '300px'
+                                          }}>📋 NOMBRE DE ACTIVIDAD</th>
                                           <th style={{ 
-                                            padding: '12px 16px', 
+                                            padding: '16px 20px', 
                                             fontWeight: 700, 
-                                            fontSize: '13px', 
+                                            fontSize: '14px', 
                                             color: theme === 'dark' ? '#7ed6df' : '#2c3e50', 
                                             border: 'none',
                                             textAlign: 'center',
-                                            letterSpacing: '0.3px',
-                                            width: '35%'
-                                          }}>ACCIÓN</th>
+                                            letterSpacing: '0.5px',
+                                            textTransform: 'uppercase',
+                                            minWidth: '120px'
+                                          }}>⚙️ ACCIONES</th>
                                         </tr>
                                       </thead>
                                       <tbody>
                                         {catalogActivities.map((activity, idx) => (
                                           <tr key={activity._id || activity.id} style={{ 
                                             background: idx % 2 === 0 ? (theme === 'dark' ? '#232a36' : '#ffffff') : (theme === 'dark' ? '#273043' : '#f8f9fa'),
-                                            transition: 'background-color 0.2s ease'
-                                          }}>
+                                            transition: 'all 0.3s ease',
+                                            borderBottom: theme === 'dark' ? '1px solid #3d4b5c' : '1px solid #e9ecef'
+                                          }}
+                                          onMouseEnter={(e) => {
+                                            e.currentTarget.style.background = theme === 'dark' ? '#2c3440' : '#e8f4f8';
+                                            e.currentTarget.style.transform = 'translateY(-1px)';
+                                          }}
+                                          onMouseLeave={(e) => {
+                                            e.currentTarget.style.background = idx % 2 === 0 ? (theme === 'dark' ? '#232a36' : '#ffffff') : (theme === 'dark' ? '#273043' : '#f8f9fa');
+                                            e.currentTarget.style.transform = 'translateY(0)';
+                                          }}
+                                          >
                                             <td style={{ 
                                               border: 'none', 
-                                              padding: '12px 16px', 
-                                              fontSize: '14px',
+                                              padding: '18px 20px', 
+                                              fontSize: '15px',
                                               color: theme === 'dark' ? '#e0e6ef' : '#2c3e50',
-                                              fontWeight: '500',
-                                              wordWrap: 'break-word',
-                                              overflow: 'hidden'
+                                              fontWeight: '600',
+                                              lineHeight: '1.4'
                                             }}>
                                               {activity.nombre}
                                             </td>
                                             <td style={{ 
                                               border: 'none', 
-                                              padding: '12px 16px', 
+                                              padding: '18px 20px', 
                                               textAlign: 'center' 
                                             }}>
                                               <button 
                                                 type="button" 
                                                 className="btn-danger" 
                                                 style={{ 
-                                                  width: '70px',
-                                                  fontSize: '11px', 
-                                                  padding: '4px 6px',
-                                                  borderRadius: '4px',
-                                                  fontWeight: '500',
+                                                  minWidth: '100px',
+                                                  fontSize: '12px', 
+                                                  padding: '8px 16px',
+                                                  borderRadius: '8px',
+                                                  fontWeight: '600',
                                                   display: 'flex',
                                                   alignItems: 'center',
                                                   justifyContent: 'center',
-                                                  gap: '3px',
-                                                  margin: '0 auto'
+                                                  gap: '6px',
+                                                  margin: '0 auto',
+                                                  transition: 'all 0.2s ease',
+                                                  textTransform: 'uppercase',
+                                                  letterSpacing: '0.3px'
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                  e.target.style.transform = 'scale(1.05)';
+                                                  e.target.style.boxShadow = '0 4px 12px rgba(220, 53, 69, 0.3)';
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                  e.target.style.transform = 'scale(1)';
+                                                  e.target.style.boxShadow = 'none';
                                                 }}
                                                 onClick={async () => {
-                                                  if (window.confirm(`¿Estás seguro de eliminar la actividad "${activity.nombre}"?`)) {
+                                                  if (window.confirm(`¿Estás seguro de eliminar la actividad "${activity.nombre}"?\n\nEsta acción no se puede deshacer.`)) {
                                                     try {
                                                       await axios.delete(`${API_URL}/catalog/activities/${activity._id || activity.id}`, {
                                                         headers: { Authorization: `Bearer ${token}` }
                                                       });
                                                       setCatalogActivities(prev => prev.filter(a => (a._id || a.id) !== (activity._id || activity.id)));
+                                                      alert('✅ Actividad eliminada correctamente');
                                                     } catch (err) {
-                                                      alert('Error al eliminar actividad: ' + (err.response?.data?.message || err.message));
+                                                      alert('❌ Error al eliminar actividad: ' + (err.response?.data?.message || err.message));
                                                     }
                                                   }
                                                 }}
@@ -1083,97 +1124,138 @@ const App = () => {
                               ) : (
                                 <div>
                                   <div style={{ 
-                                    marginBottom: '16px', 
-                                    color: theme === 'dark' ? '#b8c5d1' : '#6c757d',
-                                    fontSize: '14px',
-                                    fontWeight: '500'
+                                    marginBottom: '20px', 
+                                    padding: '12px 20px',
+                                    background: theme === 'dark' ? '#273043' : '#e8f4f8',
+                                    borderRadius: '8px',
+                                    border: theme === 'dark' ? '1px solid #3d4b5c' : '1px solid #b8e6ff',
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center'
                                   }}>
-                                    Total de tramos: {catalogTramos.length}
+                                    <div style={{
+                                      color: theme === 'dark' ? '#7ed6df' : '#0984e3',
+                                      fontSize: '16px',
+                                      fontWeight: '600',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '8px'
+                                    }}>
+                                      <span style={{ fontSize: '20px' }}>🛤️</span>
+                                      Total de tramos: {catalogTramos.length}
+                                    </div>
                                   </div>
-                                  <div className="admin-table-container" style={{ 
-                                    maxHeight: '400px', 
+                                  <div style={{ 
+                                    maxHeight: '500px', 
                                     overflowY: 'auto',
                                     overflowX: 'auto',
-                                    borderRadius: '8px',
-                                    border: theme === 'dark' ? '1px solid #3d4b5c' : '1px solid #e0e6ef'
+                                    borderRadius: '12px',
+                                    border: theme === 'dark' ? '2px solid #3d4b5c' : '2px solid #e0e6ef',
+                                    boxShadow: '0 4px 16px 0 rgba(44,62,80,0.08)'
                                   }}>
                                     <table style={{ 
                                       width: '100%',
-                                      minWidth: '300px',
+                                      minWidth: '500px',
                                       borderCollapse: 'collapse', 
                                       background: theme === 'dark' ? '#232a36' : '#ffffff',
-                                      tableLayout: 'fixed'
+                                      tableLayout: 'auto'
                                     }}>
                                       <thead>
-                                        <tr style={{ background: theme === 'dark' ? '#273043' : '#f8f9fa' }}>
+                                        <tr style={{ 
+                                          background: theme === 'dark' ? '#273043' : '#f8f9fa',
+                                          borderBottom: theme === 'dark' ? '2px solid #3d4b5c' : '2px solid #e0e6ef'
+                                        }}>
                                           <th style={{ 
-                                            padding: '12px 16px', 
+                                            padding: '16px 20px', 
                                             fontWeight: 700, 
-                                            fontSize: '13px', 
+                                            fontSize: '14px', 
                                             color: theme === 'dark' ? '#7ed6df' : '#2c3e50', 
                                             border: 'none',
                                             textAlign: 'left',
-                                            letterSpacing: '0.3px',
-                                            width: '65%'
-                                          }}>NOMBRE</th>
+                                            letterSpacing: '0.5px',
+                                            textTransform: 'uppercase',
+                                            minWidth: '300px'
+                                          }}>🛤️ NOMBRE DE TRAMO</th>
                                           <th style={{ 
-                                            padding: '12px 16px', 
+                                            padding: '16px 20px', 
                                             fontWeight: 700, 
-                                            fontSize: '13px', 
+                                            fontSize: '14px', 
                                             color: theme === 'dark' ? '#7ed6df' : '#2c3e50', 
                                             border: 'none',
                                             textAlign: 'center',
-                                            letterSpacing: '0.3px',
-                                            width: '35%'
-                                          }}>ACCIÓN</th>
+                                            letterSpacing: '0.5px',
+                                            textTransform: 'uppercase',
+                                            minWidth: '120px'
+                                          }}>⚙️ ACCIONES</th>
                                         </tr>
                                       </thead>
                                       <tbody>
                                         {catalogTramos.map((tramo, idx) => (
                                           <tr key={tramo._id || tramo.id} style={{ 
                                             background: idx % 2 === 0 ? (theme === 'dark' ? '#232a36' : '#ffffff') : (theme === 'dark' ? '#273043' : '#f8f9fa'),
-                                            transition: 'background-color 0.2s ease'
-                                          }}>
+                                            transition: 'all 0.3s ease',
+                                            borderBottom: theme === 'dark' ? '1px solid #3d4b5c' : '1px solid #e9ecef'
+                                          }}
+                                          onMouseEnter={(e) => {
+                                            e.currentTarget.style.background = theme === 'dark' ? '#2c3440' : '#e8f4f8';
+                                            e.currentTarget.style.transform = 'translateY(-1px)';
+                                          }}
+                                          onMouseLeave={(e) => {
+                                            e.currentTarget.style.background = idx % 2 === 0 ? (theme === 'dark' ? '#232a36' : '#ffffff') : (theme === 'dark' ? '#273043' : '#f8f9fa');
+                                            e.currentTarget.style.transform = 'translateY(0)';
+                                          }}
+                                          >
                                             <td style={{ 
                                               border: 'none', 
-                                              padding: '12px 16px', 
-                                              fontSize: '14px',
+                                              padding: '18px 20px', 
+                                              fontSize: '15px',
                                               color: theme === 'dark' ? '#e0e6ef' : '#2c3e50',
-                                              fontWeight: '500',
-                                              wordWrap: 'break-word',
-                                              overflow: 'hidden'
+                                              fontWeight: '600',
+                                              lineHeight: '1.4'
                                             }}>
                                               {tramo.nombre}
                                             </td>
                                             <td style={{ 
                                               border: 'none', 
-                                              padding: '12px 16px', 
+                                              padding: '18px 20px', 
                                               textAlign: 'center' 
                                             }}>
                                               <button 
                                                 type="button" 
                                                 className="btn-danger" 
                                                 style={{ 
-                                                  width: '70px',
-                                                  fontSize: '11px', 
-                                                  padding: '4px 6px',
-                                                  borderRadius: '4px',
-                                                  fontWeight: '500',
+                                                  minWidth: '100px',
+                                                  fontSize: '12px', 
+                                                  padding: '8px 16px',
+                                                  borderRadius: '8px',
+                                                  fontWeight: '600',
                                                   display: 'flex',
                                                   alignItems: 'center',
                                                   justifyContent: 'center',
-                                                  gap: '3px',
-                                                  margin: '0 auto'
+                                                  gap: '6px',
+                                                  margin: '0 auto',
+                                                  transition: 'all 0.2s ease',
+                                                  textTransform: 'uppercase',
+                                                  letterSpacing: '0.3px'
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                  e.target.style.transform = 'scale(1.05)';
+                                                  e.target.style.boxShadow = '0 4px 12px rgba(220, 53, 69, 0.3)';
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                  e.target.style.transform = 'scale(1)';
+                                                  e.target.style.boxShadow = 'none';
                                                 }}
                                                 onClick={async () => {
-                                                  if (window.confirm(`¿Estás seguro de eliminar el tramo "${tramo.nombre}"?`)) {
+                                                  if (window.confirm(`¿Estás seguro de eliminar el tramo "${tramo.nombre}"?\n\nEsta acción no se puede deshacer.`)) {
                                                     try {
                                                       await axios.delete(`${API_URL}/catalog/tramos/${tramo._id || tramo.id}`, {
                                                         headers: { Authorization: `Bearer ${token}` }
                                                       });
                                                       setCatalogTramos(prev => prev.filter(t => (t._id || t.id) !== (tramo._id || tramo.id)));
+                                                      alert('✅ Tramo eliminado correctamente');
                                                     } catch (err) {
-                                                      alert('Error al eliminar tramo: ' + (err.response?.data?.message || err.message));
+                                                      alert('❌ Error al eliminar tramo: ' + (err.response?.data?.message || err.message));
                                                     }
                                                   }
                                                 }}
@@ -1564,117 +1646,170 @@ const App = () => {
                               ) : (
                                 <div>
                                   <div style={{ 
-                                    marginBottom: '16px', 
-                                    color: theme === 'dark' ? '#b8c5d1' : '#6c757d',
-                                    fontSize: '14px',
-                                    fontWeight: '500'
+                                    marginBottom: '20px', 
+                                    padding: '12px 20px',
+                                    background: theme === 'dark' ? '#273043' : '#e8f4f8',
+                                    borderRadius: '8px',
+                                    border: theme === 'dark' ? '1px solid #3d4b5c' : '1px solid #b8e6ff',
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center'
                                   }}>
-                                    Total de supervisores: {catalogSupervisors.length}
+                                    <div style={{
+                                      color: theme === 'dark' ? '#7ed6df' : '#0984e3',
+                                      fontSize: '16px',
+                                      fontWeight: '600',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '8px'
+                                    }}>
+                                      <span style={{ fontSize: '20px' }}>👨‍💼</span>
+                                      Total de supervisores: {catalogSupervisors.length}
+                                    </div>
                                   </div>
                                   <div style={{ 
-                                    maxHeight: '400px', 
+                                    maxHeight: '500px', 
                                     overflowY: 'auto',
                                     overflowX: 'auto',
-                                    borderRadius: '8px',
-                                    border: theme === 'dark' ? '1px solid #3d4b5c' : '1px solid #e0e6ef'
+                                    borderRadius: '12px',
+                                    border: theme === 'dark' ? '2px solid #3d4b5c' : '2px solid #e0e6ef',
+                                    boxShadow: '0 4px 16px 0 rgba(44,62,80,0.08)'
                                   }}>
                                     <table style={{ 
                                       width: '100%',
-                                      minWidth: '350px',
+                                      minWidth: '650px',
                                       borderCollapse: 'collapse', 
                                       background: theme === 'dark' ? '#232a36' : '#ffffff',
-                                      tableLayout: 'fixed'
+                                      tableLayout: 'auto'
                                     }}>
                                       <thead>
-                                        <tr style={{ background: theme === 'dark' ? '#273043' : '#f8f9fa' }}>
+                                        <tr style={{ 
+                                          background: theme === 'dark' ? '#273043' : '#f8f9fa',
+                                          borderBottom: theme === 'dark' ? '2px solid #3d4b5c' : '2px solid #e0e6ef'
+                                        }}>
                                           <th style={{ 
-                                            padding: '12px 12px', 
+                                            padding: '16px 20px', 
                                             fontWeight: 700, 
-                                            fontSize: '13px', 
+                                            fontSize: '14px', 
                                             color: theme === 'dark' ? '#7ed6df' : '#2c3e50', 
                                             border: 'none',
                                             textAlign: 'left',
-                                            letterSpacing: '0.3px',
-                                            width: '45%'
-                                          }}>NOMBRE</th>
+                                            letterSpacing: '0.5px',
+                                            textTransform: 'uppercase',
+                                            minWidth: '200px'
+                                          }}>👨‍💼 NOMBRE COMPLETO</th>
                                           <th style={{ 
-                                            padding: '12px 12px', 
+                                            padding: '16px 20px', 
                                             fontWeight: 700, 
-                                            fontSize: '13px', 
+                                            fontSize: '14px', 
                                             color: theme === 'dark' ? '#7ed6df' : '#2c3e50', 
                                             border: 'none',
                                             textAlign: 'left',
-                                            letterSpacing: '0.3px',
-                                            width: '30%'
+                                            letterSpacing: '0.5px',
+                                            textTransform: 'uppercase',
+                                            minWidth: '130px'
                                           }}>RUT</th>
                                           <th style={{ 
-                                            padding: '12px 12px', 
+                                            padding: '16px 20px', 
                                             fontWeight: 700, 
-                                            fontSize: '13px', 
+                                            fontSize: '14px', 
                                             color: theme === 'dark' ? '#7ed6df' : '#2c3e50', 
                                             border: 'none',
                                             textAlign: 'center',
-                                            letterSpacing: '0.3px',
-                                            width: '25%'
-                                          }}>ACCIÓN</th>
+                                            letterSpacing: '0.5px',
+                                            textTransform: 'uppercase',
+                                            minWidth: '120px'
+                                          }}>⚙️ ACCIONES</th>
                                         </tr>
                                       </thead>
                                       <tbody>
                                         {catalogSupervisors.map((supervisor, idx) => (
                                           <tr key={supervisor._id || supervisor.id} style={{ 
                                             background: idx % 2 === 0 ? (theme === 'dark' ? '#232a36' : '#ffffff') : (theme === 'dark' ? '#273043' : '#f8f9fa'),
-                                            transition: 'background-color 0.2s ease'
-                                          }}>
+                                            transition: 'all 0.3s ease',
+                                            borderBottom: theme === 'dark' ? '1px solid #3d4b5c' : '1px solid #e9ecef'
+                                          }}
+                                          onMouseEnter={(e) => {
+                                            e.currentTarget.style.background = theme === 'dark' ? '#2c3440' : '#e8f4f8';
+                                            e.currentTarget.style.transform = 'translateY(-1px)';
+                                          }}
+                                          onMouseLeave={(e) => {
+                                            e.currentTarget.style.background = idx % 2 === 0 ? (theme === 'dark' ? '#232a36' : '#ffffff') : (theme === 'dark' ? '#273043' : '#f8f9fa');
+                                            e.currentTarget.style.transform = 'translateY(0)';
+                                          }}
+                                          >
                                             <td style={{ 
                                               border: 'none', 
-                                              padding: '12px 12px', 
-                                              fontSize: '14px',
+                                              padding: '18px 20px', 
+                                              fontSize: '15px',
                                               color: theme === 'dark' ? '#e0e6ef' : '#2c3e50',
-                                              fontWeight: '500',
-                                              wordWrap: 'break-word',
-                                              overflow: 'hidden'
+                                              fontWeight: '600',
+                                              lineHeight: '1.4'
                                             }}>
                                               {supervisor.nombre}
                                             </td>
                                             <td style={{ 
                                               border: 'none', 
-                                              padding: '12px 12px', 
-                                              fontSize: '13px',
-                                              color: theme === 'dark' ? '#b8c5d1' : '#6c757d',
-                                              fontFamily: 'monospace',
-                                              wordWrap: 'break-word'
+                                              padding: '18px 20px', 
+                                              fontSize: '14px',
+                                              color: theme === 'dark' ? '#b8c5d1' : '#495057',
+                                              fontFamily: 'Monaco, Consolas, monospace',
+                                              fontWeight: '600',
+                                              letterSpacing: '0.5px'
                                             }}>
-                                              {supervisor.rut}
+                                              <div style={{
+                                                background: theme === 'dark' ? '#1a2332' : '#f8f9fa',
+                                                padding: '8px 12px',
+                                                borderRadius: '6px',
+                                                border: theme === 'dark' ? '1px solid #3d4b5c' : '1px solid #dee2e6',
+                                                display: 'inline-block',
+                                                minWidth: '110px',
+                                                textAlign: 'center'
+                                              }}>
+                                                {supervisor.rut}
+                                              </div>
                                             </td>
                                             <td style={{ 
                                               border: 'none', 
-                                              padding: '12px 12px', 
+                                              padding: '18px 20px', 
                                               textAlign: 'center' 
                                             }}>
                                               <button 
                                                 type="button" 
                                                 className="btn-danger" 
                                                 style={{ 
-                                                  width: '65px',
-                                                  fontSize: '10px', 
-                                                  padding: '4px 6px',
-                                                  borderRadius: '4px',
-                                                  fontWeight: '500',
+                                                  minWidth: '100px',
+                                                  fontSize: '12px', 
+                                                  padding: '8px 16px',
+                                                  borderRadius: '8px',
+                                                  fontWeight: '600',
                                                   display: 'flex',
                                                   alignItems: 'center',
                                                   justifyContent: 'center',
-                                                  gap: '2px',
-                                                  margin: '0 auto'
+                                                  gap: '6px',
+                                                  margin: '0 auto',
+                                                  transition: 'all 0.2s ease',
+                                                  textTransform: 'uppercase',
+                                                  letterSpacing: '0.3px'
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                  e.target.style.transform = 'scale(1.05)';
+                                                  e.target.style.boxShadow = '0 4px 12px rgba(220, 53, 69, 0.3)';
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                  e.target.style.transform = 'scale(1)';
+                                                  e.target.style.boxShadow = 'none';
                                                 }}
                                                 onClick={async () => {
-                                                  if (window.confirm(`¿Estás seguro de eliminar al supervisor "${supervisor.nombre}"?`)) {
+                                                  if (window.confirm(`¿Estás seguro de eliminar al supervisor "${supervisor.nombre}"?\n\nEsta acción no se puede deshacer.`)) {
                                                     try {
                                                       await axios.delete(`${API_URL}/catalog/supervisors/${supervisor._id || supervisor.id}`, {
                                                         headers: { Authorization: `Bearer ${token}` }
                                                       });
                                                       setCatalogSupervisors(prev => prev.filter(s => (s._id || s.id) !== (supervisor._id || supervisor.id)));
+                                                      alert('✅ Supervisor eliminado correctamente');
                                                     } catch (err) {
-                                                      alert('Error al eliminar supervisor: ' + (err.response?.data?.message || err.message));
+                                                      alert('❌ Error al eliminar supervisor: ' + (err.response?.data?.message || err.message));
                                                     }
                                                   }
                                                 }}
@@ -1734,7 +1869,7 @@ const App = () => {
                             <th>Cargo</th>
                             <th>Tramo</th>
                             <th>Actividad</th>
-                            <th>Duración</th>
+                            <th>Duración (Horas)</th>
                             <th>Tipo de Asistencia</th>
                           </tr>
                         </thead>
@@ -1799,11 +1934,13 @@ const App = () => {
                                   </td>
                                   <td>
                                     <input 
-                                      type="text" 
+                                      type="number" 
                                       value={row.duracion || ''} 
                                       onChange={e => handleTeamChange(idx, 'duracion', e.target.value)} 
                                       className="input-table" 
-                                      placeholder="ej: 8h, 4.5h, 480min"
+                                      placeholder="Horas (ej: 8)"
+                                      min="0"
+                                      step="0.5"
                                     />
                                   </td>
                                   <td>
@@ -1943,6 +2080,7 @@ const App = () => {
                                   <th style={{ padding: '12px 8px', fontWeight: 700, fontSize: 15, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', border: '1px solid #bbb' }}>TIPO DE ASIST</th>
                                   <th style={{ padding: '12px 8px', fontWeight: 700, fontSize: 15, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', border: '1px solid #bbb' }}>TRAMO</th>
                                   <th style={{ padding: '12px 8px', fontWeight: 700, fontSize: 15, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', border: '1px solid #bbb' }}>ACTIVIDAD</th>
+                                  <th style={{ padding: '12px 8px', fontWeight: 700, fontSize: 15, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', border: '1px solid #bbb' }}>DURACIÓN (HORAS)</th>
                                 </tr>
                               </thead>
                               <tbody>
@@ -1955,6 +2093,7 @@ const App = () => {
                                     <td style={{ border: '1px solid #bbb', padding: '10px 6px' }}>{row.tipoAsist}</td>
                                     <td style={{ border: '1px solid #bbb', padding: '10px 6px' }}>{row.tramo || (catalogTramos.find(t => t.id === row.tramoId || t._id === row.tramoId)?.nombre || '')}</td>
                                     <td style={{ border: '1px solid #bbb', padding: '10px 6px' }}>{row.actividad || (catalogActivities.find(a => a.id === row.activityId || a._id === row.activityId)?.nombre || '')}</td>
+                                    <td style={{ border: '1px solid #bbb', padding: '10px 6px', textAlign: 'center', fontWeight: '600', color: theme === 'dark' ? '#7ed6df' : '#0984e3' }}>{row.duracion ? `${row.duracion}h` : ''}</td>
                                   </tr>
                                 ))}
                               </tbody>
