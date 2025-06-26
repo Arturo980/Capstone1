@@ -749,3 +749,176 @@ li small {
 .main-container.dark .btn-secondary:hover {
   background-color: #3d4349;
 }
+
+/* Estilos para botones del panel de administración */
+.admin-panel .btn-primary.active {
+  background: linear-gradient(90deg, #4F8A8B 60%, #0984e3 100%);
+  color: #fff;
+  box-shadow: 0 2px 8px 0 rgba(79, 138, 139, 0.3);
+  transform: translateY(-1px);
+}
+
+.main-container.dark .admin-panel .btn-primary.active {
+  background: linear-gradient(90deg, #4F8A8B 60%, #7ed6df 100%);
+  color: #fff;
+  box-shadow: 0 2px 8px 0 rgba(79, 138, 139, 0.4);
+}
+
+/* Media queries para paneles de administración responsivos */
+@media (max-width: 768px) {
+  .admin-panel-buttons {
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+  
+  .admin-panel-buttons button {
+    width: 100% !important;
+    flex: none !important;
+    min-width: auto !important;
+  }
+  
+  /* Hacer las tablas de administración más responsivas en móvil */
+  .admin-table-desktop {
+    display: none !important;
+  }
+  
+  .admin-table-mobile {
+    display: block !important;
+  }
+}
+
+@media (min-width: 769px) {
+  .admin-table-desktop {
+    display: block !important;
+  }
+  
+  .admin-table-mobile {
+    display: none !important;
+  }
+}
+
+/* Animación suave para los paneles expandibles */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.admin-panel {
+  animation: fadeIn 0.4s ease-out;
+}
+
+/* Efectos hover para las filas de tabla en escritorio */
+@media (min-width: 769px) {
+  .admin-panel table tbody tr:hover {
+    background-color: rgba(126, 214, 223, 0.1) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(44, 62, 80, 0.15);
+    transition: all 0.2s ease;
+  }
+  
+  .admin-panel table tbody tr:hover button {
+    transform: scale(1.05);
+    transition: transform 0.2s ease;
+  }
+}
+
+/* Mejorar la apariencia de los botones en paneles de admin */
+.admin-panel .btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(9, 132, 227, 0.3);
+}
+
+.admin-panel .btn-danger:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+/* Estilos para estados vacíos mejorados */
+.empty-state {
+  transition: all 0.3s ease;
+}
+
+.empty-state:hover {
+  transform: translateY(-2px);
+}
+
+/* Mejorar la legibilidad en dispositivos pequeños */
+@media (max-width: 480px) {
+  .admin-panel {
+    padding: 20px 16px !important;
+    margin: 16px 8px !important;
+    border-radius: 8px !important;
+  }
+  
+  .admin-panel h3 {
+    font-size: 18px !important;
+  }
+  
+  .admin-panel p {
+    font-size: 13px !important;
+  }
+  
+  .admin-panel table {
+    font-size: 13px !important;
+  }
+  
+  .admin-panel table th,
+  .admin-panel table td {
+    padding: 12px 8px !important;
+  }
+}
+
+/* Estilos específicos para mejorar las tablas en móvil */
+@media (max-width: 400px) {
+  .admin-panel table th,
+  .admin-panel table td {
+    padding: 10px 6px !important;
+    font-size: 12px !important;
+  }
+  
+  .admin-panel table {
+    min-width: 280px !important;
+  }
+  
+  .admin-panel button {
+    font-size: 11px !important;
+    padding: 4px 6px !important;
+    min-width: 60px !important;
+  }
+  
+  .admin-panel h3 {
+    font-size: 16px !important;
+  }
+}
+
+/* Asegurar que las tablas siempre tengan scroll horizontal cuando sea necesario */
+.admin-table-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling en iOS */
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: #ccc transparent; /* Firefox */
+}
+
+/* Estilos para webkit browsers (Chrome, Safari) */
+.admin-table-container::-webkit-scrollbar {
+  height: 6px;
+}
+
+.admin-table-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-table-container::-webkit-scrollbar-thumb {
+  background-color: #ccc;
+  border-radius: 3px;
+}
+
+.admin-table-container::-webkit-scrollbar-thumb:hover {
+  background-color: #999;
+}

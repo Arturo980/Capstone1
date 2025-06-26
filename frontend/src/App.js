@@ -371,8 +371,9 @@ const App = () => {
   const [inactivitySeconds, setInactivitySeconds] = useState(30);
 
   // Prevenir scroll del body cuando hay modales abiertos
+  // NO incluimos adminModal aquí porque los subpaneles del admin no deben bloquear el scroll
   useEffect(() => {
-    const isModalOpen = adminModal || showDeleteModal || showInactivityModal || showManageModal;
+    const isModalOpen = showDeleteModal || showInactivityModal || showManageModal;
     if (isModalOpen) {
       document.body.style.overflow = 'hidden';
     } else {
@@ -381,7 +382,7 @@ const App = () => {
     return () => {
       document.body.style.overflow = 'unset';
     };
-  }, [adminModal, showDeleteModal, showInactivityModal, showManageModal]);
+  }, [showDeleteModal, showInactivityModal, showManageModal]);
   const timeoutRef = useRef(null);
   const countdownRef = useRef(null);
   
@@ -559,78 +560,1050 @@ const App = () => {
                 </div>
               ) : (
                 <>
-                  {/* Botón Registrar Usuario sobre Crear Informe */}
+                  {/* Tabla de Administración - Responsive */}
                   {role === 'admin' && !window.location.pathname.startsWith('/dashboard') && (
                     <div style={{ marginBottom: 24 }}>
-                      <button
-                        type="button"
-                        className="btn-primary"
-                        onClick={() => setShowRegister(v => !v)}
-                        style={{ minWidth: 100, marginRight: 12 }}
-                      >
-                        {showRegister ? 'Cerrar Registro' : 'Registrar Usuario'}
-                      </button>
-                      <button
-                        type="button"
-                        className="btn-primary"
-                        onClick={() => setShowAdminPanel(v => !v)}
-                        style={{ minWidth: 100 }}
-                      >
-                        {showAdminPanel ? 'Ocultar Panel Admin' : 'Mostrar Panel Admin'}
-                      </button>
+                      {/* Versión Desktop */}
+                      <div className="admin-table-desktop" style={{ 
+                        display: 'block',
+                        '@media (max-width: 768px)': { display: 'none' }
+                      }}>
+                        <table style={{ 
+                          width: '100%', 
+                          borderCollapse: 'collapse', 
+                          background: theme === 'dark' ? '#232a36' : '#fff', 
+                          borderRadius: '8px', 
+                          overflow: 'hidden', 
+                          boxShadow: '0 2px 8px 0 rgba(44,62,80,0.1)',
+                          border: theme === 'dark' ? '1px solid #3d4b5c' : '1px solid #e0e6ef'
+                        }}>
+                          <tbody>
+                            <tr>
+                              <td
+                                onClick={() => {
+                                  if (showRegister) {
+                                    setShowRegister(false);
+                                  } else {
+                                    setShowRegister(true);
+                                    setShowAdminPanel(false);
+                                  }
+                                }}
+                                className={`admin-table-cell ${showRegister ? 'active' : ''}`}
+                                style={{
+                                  padding: '20px',
+                                  textAlign: 'center',
+                                  cursor: 'pointer',
+                                  fontWeight: '600',
+                                  fontSize: '16px',
+                                  background: showRegister 
+                                    ? (theme === 'dark' ? '#1a2332' : '#e8f4f8')
+                                    : (theme === 'dark' ? '#2c3440' : '#f5f8fa'),
+                                  color: showRegister 
+                                    ? (theme === 'dark' ? '#7ed6df' : '#0984e3')
+                                    : (theme === 'dark' ? '#b8c5d1' : '#5a6c7d'),
+                                  border: showRegister
+                                    ? (theme === 'dark' ? '2px solid #7ed6df' : '2px solid #0984e3')
+                                    : (theme === 'dark' ? '1px solid #3d4b5c' : '1px solid #ddd'),
+                                  transition: 'all 0.3s ease',
+                                  userSelect: 'none',
+                                  boxShadow: showRegister 
+                                    ? '0 4px 12px 0 rgba(44,62,80,0.15)' 
+                                    : '0 2px 4px 0 rgba(44,62,80,0.05)',
+                                  transform: showRegister ? 'translateY(-1px)' : 'translateY(0)'
+                                }}
+                              >
+                                👤 Registrar Usuario
+                              </td>
+                              <td
+                                onClick={() => {
+                                  if (showAdminPanel) {
+                                    setShowAdminPanel(false);
+                                  } else {
+                                    setShowAdminPanel(true);
+                                    setShowRegister(false);
+                                    setAdminModal(''); // Resetear selección de subpanel al abrir
+                                  }
+                                }}
+                                className={`admin-table-cell ${showAdminPanel ? 'active' : ''}`}
+                                style={{
+                                  padding: '20px',
+                                  textAlign: 'center',
+                                  cursor: 'pointer',
+                                  fontWeight: '600',
+                                  fontSize: '16px',
+                                  background: showAdminPanel 
+                                    ? (theme === 'dark' ? '#1a2332' : '#e8f4f8')
+                                    : (theme === 'dark' ? '#2c3440' : '#f5f8fa'),
+                                  color: showAdminPanel 
+                                    ? (theme === 'dark' ? '#7ed6df' : '#0984e3')
+                                    : (theme === 'dark' ? '#b8c5d1' : '#5a6c7d'),
+                                  border: showAdminPanel
+                                    ? (theme === 'dark' ? '2px solid #7ed6df' : '2px solid #0984e3')
+                                    : (theme === 'dark' ? '1px solid #3d4b5c' : '1px solid #ddd'),
+                                  transition: 'all 0.3s ease',
+                                  userSelect: 'none',
+                                  boxShadow: showAdminPanel 
+                                    ? '0 4px 12px 0 rgba(44,62,80,0.15)' 
+                                    : '0 2px 4px 0 rgba(44,62,80,0.05)',
+                                  transform: showAdminPanel ? 'translateY(-1px)' : 'translateY(0)'
+                                }}
+                              >
+                                ⚙️ Panel de Administración
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Versión Mobile - Botones apilados */}
+                      <div className="admin-table-mobile" style={{ 
+                        display: 'none',
+                        '@media (max-width: 768px)': { display: 'block' }
+                      }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                          <button
+                            onClick={() => {
+                              if (showRegister) {
+                                setShowRegister(false);
+                              } else {
+                                setShowRegister(true);
+                                setShowAdminPanel(false);
+                              }
+                            }}
+                            style={{
+                              padding: '16px 20px',
+                              textAlign: 'center',
+                              cursor: 'pointer',
+                              fontWeight: '600',
+                              fontSize: '16px',
+                              background: showRegister 
+                                ? (theme === 'dark' ? '#1a2332' : '#e8f4f8')
+                                : (theme === 'dark' ? '#2c3440' : '#f5f8fa'),
+                              color: showRegister 
+                                ? (theme === 'dark' ? '#7ed6df' : '#0984e3')
+                                : (theme === 'dark' ? '#b8c5d1' : '#5a6c7d'),
+                              border: showRegister
+                                ? (theme === 'dark' ? '2px solid #7ed6df' : '2px solid #0984e3')
+                                : (theme === 'dark' ? '1px solid #3d4b5c' : '1px solid #ddd'),
+                              borderRadius: '8px',
+                              transition: 'all 0.3s ease',
+                              userSelect: 'none',
+                              boxShadow: showRegister 
+                                ? '0 4px 12px 0 rgba(44,62,80,0.15)' 
+                                : '0 2px 4px 0 rgba(44,62,80,0.05)',
+                              transform: showRegister ? 'translateY(-1px)' : 'translateY(0)',
+                              width: '100%',
+                              minHeight: '60px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                          >
+                            👤 Registrar Usuario
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (showAdminPanel) {
+                                setShowAdminPanel(false);
+                              } else {
+                                setShowAdminPanel(true);
+                                setShowRegister(false);
+                                setAdminModal(''); // Resetear selección de subpanel al abrir
+                              }
+                            }}
+                            style={{
+                              padding: '16px 20px',
+                              textAlign: 'center',
+                              cursor: 'pointer',
+                              fontWeight: '600',
+                              fontSize: '16px',
+                              background: showAdminPanel 
+                                ? (theme === 'dark' ? '#1a2332' : '#e8f4f8')
+                                : (theme === 'dark' ? '#2c3440' : '#f5f8fa'),
+                              color: showAdminPanel 
+                                ? (theme === 'dark' ? '#7ed6df' : '#0984e3')
+                                : (theme === 'dark' ? '#b8c5d1' : '#5a6c7d'),
+                              border: showAdminPanel
+                                ? (theme === 'dark' ? '2px solid #7ed6df' : '2px solid #0984e3')
+                                : (theme === 'dark' ? '1px solid #3d4b5c' : '1px solid #ddd'),
+                              borderRadius: '8px',
+                              transition: 'all 0.3s ease',
+                              userSelect: 'none',
+                              boxShadow: showAdminPanel 
+                                ? '0 4px 12px 0 rgba(44,62,80,0.15)' 
+                                : '0 2px 4px 0 rgba(44,62,80,0.05)',
+                              transform: showAdminPanel ? 'translateY(-1px)' : 'translateY(0)',
+                              width: '100%',
+                              minHeight: '60px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                          >
+                            ⚙️ Panel de Administración
+                          </button>
+                        </div>
+                      </div>
+                      {/* Formulario de Registro - Panel Expandible */}
                       {showRegister && (
-                        <form className="register-box" onSubmit={handleRegister} style={{ marginTop: 18 }}>
-                          <h2>Registrar Usuario</h2>
-                          <div className="row">
-                            <div className="col">
-                              <input
-                                type="text"
-                                placeholder="Usuario"
-                                value={regUsername}
-                                onChange={e => setRegUsername(e.target.value)}
-                                className="input"
-                              />
+                        <div 
+                          className="admin-panel"
+                          style={{
+                            marginTop: '16px',
+                            background: theme === 'dark' ? '#273043' : '#f8f9fa',
+                            padding: '24px',
+                            borderRadius: '8px',
+                            border: theme === 'dark' ? '1px solid #3d4b5c' : '1px solid #e0e6ef',
+                            boxShadow: '0 4px 12px 0 rgba(44,62,80,0.1)',
+                            animation: 'fadeIn 0.3s ease'
+                          }}
+                        >
+                          <h3 style={{ 
+                            margin: '0 0 20px 0', 
+                            color: theme === 'dark' ? '#7ed6df' : '#2c3e50',
+                            fontSize: '18px',
+                            fontWeight: '600'
+                          }}>
+                            📝 Registrar Nuevo Usuario
+                          </h3>
+                          <form onSubmit={handleRegister}>
+                            <div className="row">
+                              <div className="col">
+                                <input
+                                  type="text"
+                                  placeholder="Usuario"
+                                  value={regUsername}
+                                  onChange={e => setRegUsername(e.target.value)}
+                                  className="input"
+                                />
+                              </div>
+                              <div className="col">
+                                <input
+                                  type="password"
+                                  placeholder="Contraseña"
+                                  value={regPassword}
+                                  onChange={e => setRegPassword(e.target.value)}
+                                  className="input"
+                                />
+                              </div>
+                              <div className="col">
+                                <select
+                                  value={regRole}
+                                  onChange={e => setRegRole(e.target.value)}
+                                  className="input"
+                                >
+                                  <option value="user">Usuario</option>
+                                  <option value="admin">Administrador</option>
+                                </select>
+                              </div>
+                              <div className="col">
+                                <button
+                                  type="submit"
+                                  className="btn-success"
+                                  disabled={registerLoading}
+                                  style={{ minWidth: 120 }}
+                                >
+                                  {registerLoading ? 'Registrando...' : 'Registrar'}
+                                </button>
+                              </div>
                             </div>
-                            <div className="col">
-                              <input
-                                type="password"
-                                placeholder="Contraseña"
-                                value={regPassword}
-                                onChange={e => setRegPassword(e.target.value)}
-                                className="input"
-                              />
-                            </div>
-                            <div className="col">
-                              <select
-                                value={regRole}
-                                onChange={e => setRegRole(e.target.value)}
-                                className="input"
-                              >
-                                <option value="user">Usuario</option>
-                                <option value="admin">Administrador</option>
-                              </select>
-                            </div>
-                            <div className="col">
-                              <button
-                                type="submit"
-                                className="btn-success"
-                                disabled={registerLoading}
-                                style={{ minWidth: 120 }}
-                              >
-                                {registerLoading ? 'Registrando...' : 'Registrar'}
-                              </button>
-                            </div>
-                          </div>
-                        </form>
+                          </form>
+                        </div>
                       )}
-                      {/* Panel de administración (solo admin, toggle) */}
+
+                      {/* Panel de Administración - Panel Expandible */}
                       {showAdminPanel && (
-                        <div className="admin-panel" style={{ display: 'flex', gap: 16, marginBottom: 24, marginTop: 24, flexWrap: 'wrap', flexDirection: 'row', justifyContent: 'flex-start' }}>
-                          <button type="button" className="btn-primary" style={{ minWidth: 100 }} onClick={() => setAdminModal('actividad')}>Agregar Actividad</button>
-                          <button type="button" className="btn-primary" style={{ minWidth: 100 }} onClick={() => setAdminModal('tramo')}>Agregar Tramo</button>
-                          <button type="button" className="btn-primary" style={{ minWidth: 100 }} onClick={() => setAdminModal('trabajador')}>Agregar Trabajador</button>
-                          <button type="button" className="btn-primary" style={{ minWidth: 100 }} onClick={() => setAdminModal('supervisor')}>Agregar Supervisor</button>
-                          <button type="button" className="btn-primary" style={{ minWidth: 100 }} onClick={() => setShowManageModal(true)}>Gestionar Catálogos</button>
+                        <div 
+                          className="admin-panel"
+                          style={{
+                            marginTop: '16px',
+                            background: theme === 'dark' ? '#273043' : '#f8f9fa',
+                            padding: '24px',
+                            borderRadius: '8px',
+                            border: theme === 'dark' ? '1px solid #3d4b5c' : '1px solid #e0e6ef',
+                            boxShadow: '0 4px 12px 0 rgba(44,62,80,0.1)',
+                            animation: 'fadeIn 0.3s ease'
+                          }}
+                        >
+                          <h3 style={{ 
+                            margin: '0 0 20px 0', 
+                            color: theme === 'dark' ? '#7ed6df' : '#2c3e50',
+                            fontSize: '18px',
+                            fontWeight: '600'
+                          }}>
+                            🔧 Panel de Administración
+                          </h3>
+                          <div 
+                            className="admin-panel-buttons"
+                            style={{ 
+                              display: 'flex', 
+                              gap: 16, 
+                              marginBottom: 16, 
+                              flexWrap: 'wrap', 
+                              flexDirection: 'row', 
+                              justifyContent: 'flex-start' 
+                            }}
+                          >
+                            <button type="button" className={`btn-primary ${adminModal === 'actividad' ? 'active' : ''}`} style={{ minWidth: 120, flex: '1 1 auto' }} onClick={() => setAdminModal(adminModal === 'actividad' ? null : 'actividad')}>📋 Actividad</button>
+                            <button type="button" className={`btn-primary ${adminModal === 'tramo' ? 'active' : ''}`} style={{ minWidth: 120, flex: '1 1 auto' }} onClick={() => setAdminModal(adminModal === 'tramo' ? null : 'tramo')}>🛤️ Tramo</button>
+                            <button type="button" className={`btn-primary ${adminModal === 'trabajador' ? 'active' : ''}`} style={{ minWidth: 120, flex: '1 1 auto' }} onClick={() => setAdminModal(adminModal === 'trabajador' ? null : 'trabajador')}>👷 Trabajador</button>
+                            <button type="button" className={`btn-primary ${adminModal === 'supervisor' ? 'active' : ''}`} style={{ minWidth: 120, flex: '1 1 auto' }} onClick={() => setAdminModal(adminModal === 'supervisor' ? null : 'supervisor')}>👨‍💼 Supervisor</button>
+                          </div>
+                          
+                          {/* Panel expandido para Actividad */}
+                          {adminModal === 'actividad' && (
+                            <div style={{ 
+                              background: theme === 'dark' ? '#1e252d' : '#ffffff', 
+                              padding: '28px', 
+                              borderRadius: '12px', 
+                              border: theme === 'dark' ? '1.5px solid #3d4b5c' : '1.5px solid #e0e6ef',
+                              boxShadow: '0 4px 20px 0 rgba(44,62,80,0.12)',
+                              marginTop: '20px'
+                            }}>
+                              <div style={{ 
+                                display: 'flex', 
+                                justifyContent: 'space-between', 
+                                alignItems: 'center', 
+                                marginBottom: '24px',
+                                paddingBottom: '16px',
+                                borderBottom: theme === 'dark' ? '2px solid #3d4b5c' : '2px solid #e0e6ef'
+                              }}>
+                                <div>
+                                  <h3 style={{ 
+                                    margin: 0, 
+                                    color: theme === 'dark' ? '#7ed6df' : '#2c3e50',
+                                    fontSize: '20px',
+                                    fontWeight: '600'
+                                  }}>📋 Gestión de Actividades</h3>
+                                  <p style={{ 
+                                    margin: '4px 0 0 0', 
+                                    color: theme === 'dark' ? '#b8c5d1' : '#6c757d',
+                                    fontSize: '14px'
+                                  }}>Administra las actividades disponibles en el sistema</p>
+                                </div>
+                                <button 
+                                  type="button" 
+                                  className="btn-primary" 
+                                  style={{ 
+                                    minWidth: 140, 
+                                    height: '42px',
+                                    fontSize: '14px',
+                                    fontWeight: '600',
+                                    borderRadius: '8px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '8px'
+                                  }} 
+                                  onClick={() => setShowManageModal(true)}
+                                >
+                                  ➕ Agregar Nueva
+                                </button>
+                              </div>
+                              {catalogActivities.length === 0 ? (
+                                <div style={{ 
+                                  textAlign: 'center', 
+                                  padding: '40px 20px',
+                                  color: theme === 'dark' ? '#b8c5d1' : '#6c757d',
+                                  fontSize: '16px'
+                                }}>
+                                  <div style={{ fontSize: '48px', marginBottom: '16px' }}>📋</div>
+                                  <p style={{ margin: '0 0 8px 0', fontWeight: '500' }}>No hay actividades registradas</p>
+                                  <p style={{ margin: 0, fontSize: '14px' }}>Comienza agregando tu primera actividad</p>
+                                </div>
+                              ) : (
+                                <div>
+                                  <div style={{ 
+                                    marginBottom: '16px', 
+                                    color: theme === 'dark' ? '#b8c5d1' : '#6c757d',
+                                    fontSize: '14px',
+                                    fontWeight: '500'
+                                  }}>
+                                    Total de actividades: {catalogActivities.length}
+                                  </div>
+                                  <div className="admin-table-container" style={{ 
+                                    maxHeight: '400px', 
+                                    overflowY: 'auto',
+                                    overflowX: 'auto',
+                                    borderRadius: '8px',
+                                    border: theme === 'dark' ? '1px solid #3d4b5c' : '1px solid #e0e6ef'
+                                  }}>
+                                    <table style={{ 
+                                      width: '100%',
+                                      minWidth: '300px',
+                                      borderCollapse: 'collapse', 
+                                      background: theme === 'dark' ? '#232a36' : '#ffffff',
+                                      tableLayout: 'fixed'
+                                    }}>
+                                      <thead>
+                                        <tr style={{ background: theme === 'dark' ? '#273043' : '#f8f9fa' }}>
+                                          <th style={{ 
+                                            padding: '12px 16px', 
+                                            fontWeight: 700, 
+                                            fontSize: '13px', 
+                                            color: theme === 'dark' ? '#7ed6df' : '#2c3e50', 
+                                            border: 'none',
+                                            textAlign: 'left',
+                                            letterSpacing: '0.3px',
+                                            width: '65%'
+                                          }}>NOMBRE</th>
+                                          <th style={{ 
+                                            padding: '12px 16px', 
+                                            fontWeight: 700, 
+                                            fontSize: '13px', 
+                                            color: theme === 'dark' ? '#7ed6df' : '#2c3e50', 
+                                            border: 'none',
+                                            textAlign: 'center',
+                                            letterSpacing: '0.3px',
+                                            width: '35%'
+                                          }}>ACCIÓN</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {catalogActivities.map((activity, idx) => (
+                                          <tr key={activity._id || activity.id} style={{ 
+                                            background: idx % 2 === 0 ? (theme === 'dark' ? '#232a36' : '#ffffff') : (theme === 'dark' ? '#273043' : '#f8f9fa'),
+                                            transition: 'background-color 0.2s ease'
+                                          }}>
+                                            <td style={{ 
+                                              border: 'none', 
+                                              padding: '12px 16px', 
+                                              fontSize: '14px',
+                                              color: theme === 'dark' ? '#e0e6ef' : '#2c3e50',
+                                              fontWeight: '500',
+                                              wordWrap: 'break-word',
+                                              overflow: 'hidden'
+                                            }}>
+                                              {activity.nombre}
+                                            </td>
+                                            <td style={{ 
+                                              border: 'none', 
+                                              padding: '12px 16px', 
+                                              textAlign: 'center' 
+                                            }}>
+                                              <button 
+                                                type="button" 
+                                                className="btn-danger" 
+                                                style={{ 
+                                                  width: '70px',
+                                                  fontSize: '11px', 
+                                                  padding: '4px 6px',
+                                                  borderRadius: '4px',
+                                                  fontWeight: '500',
+                                                  display: 'flex',
+                                                  alignItems: 'center',
+                                                  justifyContent: 'center',
+                                                  gap: '3px',
+                                                  margin: '0 auto'
+                                                }}
+                                                onClick={async () => {
+                                                  if (window.confirm(`¿Estás seguro de eliminar la actividad "${activity.nombre}"?`)) {
+                                                    try {
+                                                      await axios.delete(`${API_URL}/catalog/activities/${activity._id || activity.id}`, {
+                                                        headers: { Authorization: `Bearer ${token}` }
+                                                      });
+                                                      setCatalogActivities(prev => prev.filter(a => (a._id || a.id) !== (activity._id || activity.id)));
+                                                    } catch (err) {
+                                                      alert('Error al eliminar actividad: ' + (err.response?.data?.message || err.message));
+                                                    }
+                                                  }
+                                                }}
+                                              >
+                                                🗑️ Eliminar
+                                              </button>
+                                            </td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}                          {/* Panel expandido para Tramo */}
+                          {adminModal === 'tramo' && (
+                            <div style={{ 
+                              background: theme === 'dark' ? '#1e252d' : '#ffffff', 
+                              padding: '28px', 
+                              borderRadius: '12px', 
+                              border: theme === 'dark' ? '1.5px solid #3d4b5c' : '1.5px solid #e0e6ef',
+                              boxShadow: '0 4px 20px 0 rgba(44,62,80,0.12)',
+                              marginTop: '20px'
+                            }}>
+                              <div style={{ 
+                                display: 'flex', 
+                                justifyContent: 'space-between', 
+                                alignItems: 'center', 
+                                marginBottom: '24px',
+                                paddingBottom: '16px',
+                                borderBottom: theme === 'dark' ? '2px solid #3d4b5c' : '2px solid #e0e6ef'
+                              }}>
+                                <div>
+                                  <h3 style={{ 
+                                    margin: 0, 
+                                    color: theme === 'dark' ? '#7ed6df' : '#2c3e50',
+                                    fontSize: '20px',
+                                    fontWeight: '600'
+                                  }}>🛤️ Gestión de Tramos</h3>
+                                  <p style={{ 
+                                    margin: '4px 0 0 0', 
+                                    color: theme === 'dark' ? '#b8c5d1' : '#6c757d',
+                                    fontSize: '14px'
+                                  }}>Administra los tramos disponibles para las actividades</p>
+                                </div>
+                                <button 
+                                  type="button" 
+                                  className="btn-primary" 
+                                  style={{ 
+                                    minWidth: 140, 
+                                    height: '42px',
+                                    fontSize: '14px',
+                                    fontWeight: '600',
+                                    borderRadius: '8px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '8px'
+                                  }} 
+                                  onClick={() => setShowManageModal(true)}
+                                >
+                                  ➕ Agregar Nuevo
+                                </button>
+                              </div>
+                              {catalogTramos.length === 0 ? (
+                                <div style={{ 
+                                  textAlign: 'center', 
+                                  padding: '40px 20px',
+                                  color: theme === 'dark' ? '#b8c5d1' : '#6c757d',
+                                  fontSize: '16px'
+                                }}>
+                                  <div style={{ fontSize: '48px', marginBottom: '16px' }}>🛤️</div>
+                                  <p style={{ margin: '0 0 8px 0', fontWeight: '500' }}>No hay tramos registrados</p>
+                                  <p style={{ margin: 0, fontSize: '14px' }}>Comienza agregando tu primer tramo</p>
+                                </div>
+                              ) : (
+                                <div>
+                                  <div style={{ 
+                                    marginBottom: '16px', 
+                                    color: theme === 'dark' ? '#b8c5d1' : '#6c757d',
+                                    fontSize: '14px',
+                                    fontWeight: '500'
+                                  }}>
+                                    Total de tramos: {catalogTramos.length}
+                                  </div>
+                                  <div className="admin-table-container" style={{ 
+                                    maxHeight: '400px', 
+                                    overflowY: 'auto',
+                                    overflowX: 'auto',
+                                    borderRadius: '8px',
+                                    border: theme === 'dark' ? '1px solid #3d4b5c' : '1px solid #e0e6ef'
+                                  }}>
+                                    <table style={{ 
+                                      width: '100%',
+                                      minWidth: '300px',
+                                      borderCollapse: 'collapse', 
+                                      background: theme === 'dark' ? '#232a36' : '#ffffff',
+                                      tableLayout: 'fixed'
+                                    }}>
+                                      <thead>
+                                        <tr style={{ background: theme === 'dark' ? '#273043' : '#f8f9fa' }}>
+                                          <th style={{ 
+                                            padding: '12px 16px', 
+                                            fontWeight: 700, 
+                                            fontSize: '13px', 
+                                            color: theme === 'dark' ? '#7ed6df' : '#2c3e50', 
+                                            border: 'none',
+                                            textAlign: 'left',
+                                            letterSpacing: '0.3px',
+                                            width: '65%'
+                                          }}>NOMBRE</th>
+                                          <th style={{ 
+                                            padding: '12px 16px', 
+                                            fontWeight: 700, 
+                                            fontSize: '13px', 
+                                            color: theme === 'dark' ? '#7ed6df' : '#2c3e50', 
+                                            border: 'none',
+                                            textAlign: 'center',
+                                            letterSpacing: '0.3px',
+                                            width: '35%'
+                                          }}>ACCIÓN</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {catalogTramos.map((tramo, idx) => (
+                                          <tr key={tramo._id || tramo.id} style={{ 
+                                            background: idx % 2 === 0 ? (theme === 'dark' ? '#232a36' : '#ffffff') : (theme === 'dark' ? '#273043' : '#f8f9fa'),
+                                            transition: 'background-color 0.2s ease'
+                                          }}>
+                                            <td style={{ 
+                                              border: 'none', 
+                                              padding: '12px 16px', 
+                                              fontSize: '14px',
+                                              color: theme === 'dark' ? '#e0e6ef' : '#2c3e50',
+                                              fontWeight: '500',
+                                              wordWrap: 'break-word',
+                                              overflow: 'hidden'
+                                            }}>
+                                              {tramo.nombre}
+                                            </td>
+                                            <td style={{ 
+                                              border: 'none', 
+                                              padding: '12px 16px', 
+                                              textAlign: 'center' 
+                                            }}>
+                                              <button 
+                                                type="button" 
+                                                className="btn-danger" 
+                                                style={{ 
+                                                  width: '70px',
+                                                  fontSize: '11px', 
+                                                  padding: '4px 6px',
+                                                  borderRadius: '4px',
+                                                  fontWeight: '500',
+                                                  display: 'flex',
+                                                  alignItems: 'center',
+                                                  justifyContent: 'center',
+                                                  gap: '3px',
+                                                  margin: '0 auto'
+                                                }}
+                                                onClick={async () => {
+                                                  if (window.confirm(`¿Estás seguro de eliminar el tramo "${tramo.nombre}"?`)) {
+                                                    try {
+                                                      await axios.delete(`${API_URL}/catalog/tramos/${tramo._id || tramo.id}`, {
+                                                        headers: { Authorization: `Bearer ${token}` }
+                                                      });
+                                                      setCatalogTramos(prev => prev.filter(t => (t._id || t.id) !== (tramo._id || tramo.id)));
+                                                    } catch (err) {
+                                                      alert('Error al eliminar tramo: ' + (err.response?.data?.message || err.message));
+                                                    }
+                                                  }
+                                                }}
+                                              >
+                                                🗑️ Eliminar
+                                              </button>
+                                            </td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Panel expandido para Trabajador */}
+                          {adminModal === 'trabajador' && (
+                            <div style={{ 
+                              background: theme === 'dark' ? '#1e252d' : '#ffffff', 
+                              padding: '28px', 
+                              borderRadius: '12px', 
+                              border: theme === 'dark' ? '1.5px solid #3d4b5c' : '1.5px solid #e0e6ef',
+                              boxShadow: '0 4px 20px 0 rgba(44,62,80,0.12)',
+                              marginTop: '20px'
+                            }}>
+                              <div style={{ 
+                                display: 'flex', 
+                                justifyContent: 'space-between', 
+                                alignItems: 'center', 
+                                marginBottom: '24px',
+                                paddingBottom: '16px',
+                                borderBottom: theme === 'dark' ? '2px solid #3d4b5c' : '2px solid #e0e6ef'
+                              }}>
+                                <div>
+                                  <h3 style={{ 
+                                    margin: 0, 
+                                    color: theme === 'dark' ? '#7ed6df' : '#2c3e50',
+                                    fontSize: '20px',
+                                    fontWeight: '600'
+                                  }}>👷 Gestión de Trabajadores</h3>
+                                  <p style={{ 
+                                    margin: '4px 0 0 0', 
+                                    color: theme === 'dark' ? '#b8c5d1' : '#6c757d',
+                                    fontSize: '14px'
+                                  }}>Administra el personal de trabajo registrado</p>
+                                </div>
+                                <button 
+                                  type="button" 
+                                  className="btn-primary" 
+                                  style={{ 
+                                    minWidth: 140, 
+                                    height: '42px',
+                                    fontSize: '14px',
+                                    fontWeight: '600',
+                                    borderRadius: '8px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '8px'
+                                  }} 
+                                  onClick={() => setShowManageModal(true)}
+                                >
+                                  ➕ Agregar Nuevo
+                                </button>
+                              </div>
+                              {catalogWorkers.length === 0 ? (
+                                <div style={{ 
+                                  textAlign: 'center', 
+                                  padding: '40px 20px',
+                                  color: theme === 'dark' ? '#b8c5d1' : '#6c757d',
+                                  fontSize: '16px'
+                                }}>
+                                  <div style={{ fontSize: '48px', marginBottom: '16px' }}>👷</div>
+                                  <p style={{ margin: '0 0 8px 0', fontWeight: '500' }}>No hay trabajadores registrados</p>
+                                  <p style={{ margin: 0, fontSize: '14px' }}>Comienza agregando tu primer trabajador</p>
+                                </div>
+                              ) : (
+                                <div>
+                                  <div style={{ 
+                                    marginBottom: '16px', 
+                                    color: theme === 'dark' ? '#b8c5d1' : '#6c757d',
+                                    fontSize: '14px',
+                                    fontWeight: '500'
+                                  }}>
+                                    Total de trabajadores: {catalogWorkers.length}
+                                  </div>
+                                  <div style={{ 
+                                    maxHeight: '400px', 
+                                    overflowY: 'auto',
+                                    overflowX: 'auto',
+                                    borderRadius: '8px',
+                                    border: theme === 'dark' ? '1px solid #3d4b5c' : '1px solid #e0e6ef'
+                                  }}>
+                                    <table style={{ 
+                                      width: '100%',
+                                      minWidth: '550px',
+                                      borderCollapse: 'collapse', 
+                                      background: theme === 'dark' ? '#232a36' : '#ffffff',
+                                      tableLayout: 'fixed'
+                                    }}>
+                                      <thead>
+                                        <tr style={{ background: theme === 'dark' ? '#273043' : '#f8f9fa' }}>
+                                          <th style={{ 
+                                            padding: '12px 10px', 
+                                            fontWeight: 700, 
+                                            fontSize: '12px', 
+                                            color: theme === 'dark' ? '#7ed6df' : '#2c3e50', 
+                                            border: 'none',
+                                            textAlign: 'left',
+                                            letterSpacing: '0.3px',
+                                            width: '40%'
+                                          }}>NOMBRE</th>
+                                          <th style={{ 
+                                            padding: '12px 10px', 
+                                            fontWeight: 700, 
+                                            fontSize: '12px', 
+                                            color: theme === 'dark' ? '#7ed6df' : '#2c3e50', 
+                                            border: 'none',
+                                            textAlign: 'left',
+                                            letterSpacing: '0.3px',
+                                            width: '28%'
+                                          }}>RUT</th>
+                                          <th style={{ 
+                                            padding: '12px 10px', 
+                                            fontWeight: 700, 
+                                            fontSize: '12px', 
+                                            color: theme === 'dark' ? '#7ed6df' : '#2c3e50', 
+                                            border: 'none',
+                                            textAlign: 'left',
+                                            letterSpacing: '0.3px',
+                                            width: '22%'
+                                          }}>CARGO</th>
+                                          <th style={{ 
+                                            padding: '12px 10px', 
+                                            fontWeight: 700, 
+                                            fontSize: '12px', 
+                                            color: theme === 'dark' ? '#7ed6df' : '#2c3e50', 
+                                            border: 'none',
+                                            textAlign: 'center',
+                                            letterSpacing: '0.3px',
+                                            width: '10%'
+                                          }}>ACCIÓN</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {catalogWorkers.map((worker, idx) => (
+                                          <tr key={worker._id || worker.id} style={{ 
+                                            background: idx % 2 === 0 ? (theme === 'dark' ? '#232a36' : '#ffffff') : (theme === 'dark' ? '#273043' : '#f8f9fa'),
+                                            transition: 'background-color 0.2s ease'
+                                          }}>
+                                            <td style={{ 
+                                              border: 'none', 
+                                              padding: '12px 10px', 
+                                              fontSize: '13px',
+                                              color: theme === 'dark' ? '#e0e6ef' : '#2c3e50',
+                                              fontWeight: '500',
+                                              wordWrap: 'break-word',
+                                              overflow: 'hidden'
+                                            }}>
+                                              {worker.nombre}
+                                            </td>
+                                            <td style={{ 
+                                              border: 'none', 
+                                              padding: '12px 10px', 
+                                              fontSize: '13px',
+                                              color: theme === 'dark' ? '#b8c5d1' : '#6c757d',
+                                              fontFamily: 'monospace',
+                                              wordWrap: 'break-word'
+                                            }}>
+                                              {worker.rut}
+                                            </td>
+                                            <td style={{ 
+                                              border: 'none', 
+                                              padding: '12px 10px', 
+                                              fontSize: '12px',
+                                              color: theme === 'dark' ? '#b8c5d1' : '#6c757d'
+                                            }}>
+                                              <span style={{
+                                                background: theme === 'dark' ? '#3d4b5c' : '#e9ecef',
+                                                padding: '3px 8px',
+                                                borderRadius: '4px',
+                                                fontSize: '11px',
+                                                fontWeight: '500',
+                                                display: 'inline-block',
+                                                textAlign: 'center',
+                                                wordWrap: 'break-word'
+                                              }}>
+                                                {worker.cargo}
+                                              </span>
+                                            </td>
+                                            <td style={{ 
+                                              border: 'none', 
+                                              padding: '12px 10px', 
+                                              textAlign: 'center' 
+                                            }}>
+                                              <button 
+                                                type="button" 
+                                                className="btn-danger" 
+                                                style={{ 
+                                                  width: '60px',
+                                                  fontSize: '10px', 
+                                                  padding: '4px 5px',
+                                                  borderRadius: '4px',
+                                                  fontWeight: '500',
+                                                  display: 'flex',
+                                                  alignItems: 'center',
+                                                  justifyContent: 'center',
+                                                  gap: '2px',
+                                                  margin: '0 auto'
+                                                }}
+                                                onClick={async () => {
+                                                  if (window.confirm(`¿Estás seguro de eliminar al trabajador "${worker.nombre}"?`)) {
+                                                    try {
+                                                      await axios.delete(`${API_URL}/catalog/workers/${worker._id || worker.id}`, {
+                                                        headers: { Authorization: `Bearer ${token}` }
+                                                      });
+                                                      setCatalogWorkers(prev => prev.filter(w => (w._id || w.id) !== (worker._id || worker.id)));
+                                                    } catch (err) {
+                                                      alert('Error al eliminar trabajador: ' + (err.response?.data?.message || err.message));
+                                                    }
+                                                  }
+                                                }}
+                                              >
+                                                🗑️ Eliminar
+                                              </button>
+                                            </td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Panel expandido para Supervisor */}
+                          {adminModal === 'supervisor' && (
+                            <div style={{ 
+                              background: theme === 'dark' ? '#1e252d' : '#ffffff', 
+                              padding: '28px', 
+                              borderRadius: '12px', 
+                              border: theme === 'dark' ? '1.5px solid #3d4b5c' : '1.5px solid #e0e6ef',
+                              boxShadow: '0 4px 20px 0 rgba(44,62,80,0.12)',
+                              marginTop: '20px'
+                            }}>
+                              <div style={{ 
+                                display: 'flex', 
+                                justifyContent: 'space-between', 
+                                alignItems: 'center', 
+                                marginBottom: '24px',
+                                paddingBottom: '16px',
+                                borderBottom: theme === 'dark' ? '2px solid #3d4b5c' : '2px solid #e0e6ef'
+                              }}>
+                                <div>
+                                  <h3 style={{ 
+                                    margin: 0, 
+                                    color: theme === 'dark' ? '#7ed6df' : '#2c3e50',
+                                    fontSize: '20px',
+                                    fontWeight: '600'
+                                  }}>👨‍💼 Gestión de Supervisores</h3>
+                                  <p style={{ 
+                                    margin: '4px 0 0 0', 
+                                    color: theme === 'dark' ? '#b8c5d1' : '#6c757d',
+                                    fontSize: '14px'
+                                  }}>Administra los supervisores encargados de los proyectos</p>
+                                </div>
+                                <button 
+                                  type="button" 
+                                  className="btn-primary" 
+                                  style={{ 
+                                    minWidth: 140, 
+                                    height: '42px',
+                                    fontSize: '14px',
+                                    fontWeight: '600',
+                                    borderRadius: '8px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '8px'
+                                  }} 
+                                  onClick={() => setShowManageModal(true)}
+                                >
+                                  ➕ Agregar Nuevo
+                                </button>
+                              </div>
+                              {catalogSupervisors.length === 0 ? (
+                                <div style={{ 
+                                  textAlign: 'center', 
+                                  padding: '40px 20px',
+                                  color: theme === 'dark' ? '#b8c5d1' : '#6c757d',
+                                  fontSize: '16px'
+                                }}>
+                                  <div style={{ fontSize: '48px', marginBottom: '16px' }}>👨‍💼</div>
+                                  <p style={{ margin: '0 0 8px 0', fontWeight: '500' }}>No hay supervisores registrados</p>
+                                  <p style={{ margin: 0, fontSize: '14px' }}>Comienza agregando tu primer supervisor</p>
+                                </div>
+                              ) : (
+                                <div>
+                                  <div style={{ 
+                                    marginBottom: '16px', 
+                                    color: theme === 'dark' ? '#b8c5d1' : '#6c757d',
+                                    fontSize: '14px',
+                                    fontWeight: '500'
+                                  }}>
+                                    Total de supervisores: {catalogSupervisors.length}
+                                  </div>
+                                  <div style={{ 
+                                    maxHeight: '400px', 
+                                    overflowY: 'auto',
+                                    overflowX: 'auto',
+                                    borderRadius: '8px',
+                                    border: theme === 'dark' ? '1px solid #3d4b5c' : '1px solid #e0e6ef'
+                                  }}>
+                                    <table style={{ 
+                                      width: '100%',
+                                      minWidth: '350px',
+                                      borderCollapse: 'collapse', 
+                                      background: theme === 'dark' ? '#232a36' : '#ffffff',
+                                      tableLayout: 'fixed'
+                                    }}>
+                                      <thead>
+                                        <tr style={{ background: theme === 'dark' ? '#273043' : '#f8f9fa' }}>
+                                          <th style={{ 
+                                            padding: '12px 12px', 
+                                            fontWeight: 700, 
+                                            fontSize: '13px', 
+                                            color: theme === 'dark' ? '#7ed6df' : '#2c3e50', 
+                                            border: 'none',
+                                            textAlign: 'left',
+                                            letterSpacing: '0.3px',
+                                            width: '45%'
+                                          }}>NOMBRE</th>
+                                          <th style={{ 
+                                            padding: '12px 12px', 
+                                            fontWeight: 700, 
+                                            fontSize: '13px', 
+                                            color: theme === 'dark' ? '#7ed6df' : '#2c3e50', 
+                                            border: 'none',
+                                            textAlign: 'left',
+                                            letterSpacing: '0.3px',
+                                            width: '30%'
+                                          }}>RUT</th>
+                                          <th style={{ 
+                                            padding: '12px 12px', 
+                                            fontWeight: 700, 
+                                            fontSize: '13px', 
+                                            color: theme === 'dark' ? '#7ed6df' : '#2c3e50', 
+                                            border: 'none',
+                                            textAlign: 'center',
+                                            letterSpacing: '0.3px',
+                                            width: '25%'
+                                          }}>ACCIÓN</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {catalogSupervisors.map((supervisor, idx) => (
+                                          <tr key={supervisor._id || supervisor.id} style={{ 
+                                            background: idx % 2 === 0 ? (theme === 'dark' ? '#232a36' : '#ffffff') : (theme === 'dark' ? '#273043' : '#f8f9fa'),
+                                            transition: 'background-color 0.2s ease'
+                                          }}>
+                                            <td style={{ 
+                                              border: 'none', 
+                                              padding: '12px 12px', 
+                                              fontSize: '14px',
+                                              color: theme === 'dark' ? '#e0e6ef' : '#2c3e50',
+                                              fontWeight: '500',
+                                              wordWrap: 'break-word',
+                                              overflow: 'hidden'
+                                            }}>
+                                              {supervisor.nombre}
+                                            </td>
+                                            <td style={{ 
+                                              border: 'none', 
+                                              padding: '12px 12px', 
+                                              fontSize: '13px',
+                                              color: theme === 'dark' ? '#b8c5d1' : '#6c757d',
+                                              fontFamily: 'monospace',
+                                              wordWrap: 'break-word'
+                                            }}>
+                                              {supervisor.rut}
+                                            </td>
+                                            <td style={{ 
+                                              border: 'none', 
+                                              padding: '12px 12px', 
+                                              textAlign: 'center' 
+                                            }}>
+                                              <button 
+                                                type="button" 
+                                                className="btn-danger" 
+                                                style={{ 
+                                                  width: '65px',
+                                                  fontSize: '10px', 
+                                                  padding: '4px 6px',
+                                                  borderRadius: '4px',
+                                                  fontWeight: '500',
+                                                  display: 'flex',
+                                                  alignItems: 'center',
+                                                  justifyContent: 'center',
+                                                  gap: '2px',
+                                                  margin: '0 auto'
+                                                }}
+                                                onClick={async () => {
+                                                  if (window.confirm(`¿Estás seguro de eliminar al supervisor "${supervisor.nombre}"?`)) {
+                                                    try {
+                                                      await axios.delete(`${API_URL}/catalog/supervisors/${supervisor._id || supervisor.id}`, {
+                                                        headers: { Authorization: `Bearer ${token}` }
+                                                      });
+                                                      setCatalogSupervisors(prev => prev.filter(s => (s._id || s.id) !== (supervisor._id || supervisor.id)));
+                                                    } catch (err) {
+                                                      alert('Error al eliminar supervisor: ' + (err.response?.data?.message || err.message));
+                                                    }
+                                                  }
+                                                }}
+                                              >
+                                                🗑️ Eliminar
+                                              </button>
+                                            </td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -969,10 +1942,10 @@ const App = () => {
                     </div>
                   )}
                   {/* MODALS PANEL ADMIN */}
-                  {adminModal === 'actividad' && (
+                  {adminModal === 'actividad' && showManageModal && (
                     <div className="modal-bg">
                       <div className="modal-box">
-                        <button className="modal-close" onClick={() => { setAdminModal(null); setModalError(''); }}>×</button>
+                        <button className="modal-close" onClick={() => { setShowManageModal(false); setModalError(''); }}>×</button>
                         <h2>Agregar Actividad</h2>
                         <form onSubmit={async e => {
                           e.preventDefault();
@@ -982,7 +1955,7 @@ const App = () => {
                           try {
                             const res = await axios.post(`${API_URL}/catalog/activities`, { nombre }, { headers: { Authorization: `Bearer ${token}` } });
                             setCatalogActivities(prev => [...prev, res.data]);
-                            setAdminModal(null);
+                            setShowManageModal(false);
                           } catch (err) { setModalError('Error: ' + (err.response?.data?.message || err.message)); }
                           setModalLoading(false);
                         }}>
@@ -993,10 +1966,10 @@ const App = () => {
                       </div>
                     </div>
                   )}
-                  {adminModal === 'tramo' && (
+                  {adminModal === 'tramo' && showManageModal && (
                     <div className="modal-bg">
                       <div className="modal-box">
-                        <button className="modal-close" onClick={() => { setAdminModal(null); setModalError(''); }}>×</button>
+                        <button className="modal-close" onClick={() => { setShowManageModal(false); setModalError(''); }}>×</button>
                         <h2>Agregar Tramo</h2>
                         <form onSubmit={async e => {
                           e.preventDefault();
@@ -1006,7 +1979,7 @@ const App = () => {
                           try {
                             const res = await axios.post(`${API_URL}/catalog/tramos`, { nombre }, { headers: { Authorization: `Bearer ${token}` } });
                             setCatalogTramos(prev => [...prev, res.data]);
-                            setAdminModal(null);
+                            setShowManageModal(false);
                           } catch (err) { setModalError('Error: ' + (err.response?.data?.message || err.message)); }
                           setModalLoading(false);
                         }}>
@@ -1017,10 +1990,10 @@ const App = () => {
                       </div>
                     </div>
                   )}
-                  {adminModal === 'trabajador' && (
+                  {adminModal === 'trabajador' && showManageModal && (
                     <div className="modal-bg">
                       <div className="modal-box">
-                        <button className="modal-close" onClick={() => { setAdminModal(null); setModalError(''); }}>×</button>
+                        <button className="modal-close" onClick={() => { setShowManageModal(false); setModalError(''); }}>×</button>
                         <h2>Agregar Trabajador</h2>
                         <form onSubmit={async e => {
                           e.preventDefault();
@@ -1047,7 +2020,7 @@ const App = () => {
                           try {
                             const res = await axios.post(`${API_URL}/catalog/workers`, { nombre, rut, cargo }, { headers: { Authorization: `Bearer ${token}` } });
                             setCatalogWorkers(prev => [...prev, res.data]);
-                            setAdminModal(null);
+                            setShowManageModal(false);
                           } catch (err) { setModalError('Error: ' + (err.response?.data?.message || err.message)); }
                           setModalLoading(false);
                         }}>
@@ -1066,10 +2039,10 @@ const App = () => {
                       </div>
                     </div>
                   )}
-                  {adminModal === 'supervisor' && (
+                  {adminModal === 'supervisor' && showManageModal && (
                     <div className="modal-bg">
                       <div className="modal-box">
-                        <button className="modal-close" onClick={() => { setAdminModal(null); setModalError(''); }}>×</button>
+                        <button className="modal-close" onClick={() => { setShowManageModal(false); setModalError(''); }}>×</button>
                         <h2>Agregar Supervisor</h2>
                         <form onSubmit={async e => {
                           e.preventDefault();
@@ -1095,7 +2068,7 @@ const App = () => {
                           try {
                             const res = await axios.post(`${API_URL}/catalog/supervisors`, { nombre, rut }, { headers: { Authorization: `Bearer ${token}` } });
                             setCatalogSupervisors(prev => [...prev, res.data]);
-                            setAdminModal(null);
+                            setShowManageModal(false);
                           } catch (err) { setModalError('Error: ' + (err.response?.data?.message || err.message)); }
                           setModalLoading(false);
                         }}>
@@ -1105,241 +2078,6 @@ const App = () => {
                           {modalError && <div className="error-box">{modalError}</div>}
                           <button type="submit" className="btn-success" disabled={modalLoading}>{modalLoading ? 'Agregando...' : 'Confirmar'}</button>
                         </form>
-                      </div>
-                    </div>
-                  )}
-                  {/* MODAL DE GESTIÓN GENERAL */}
-                  {showManageModal && (
-                    <div className="modal-bg">
-                      <div className="modal-box" style={{ minWidth: '700px', maxWidth: '90vw', maxHeight: '90vh' }}>
-                        <button className="modal-close" onClick={() => { setShowManageModal(false); setModalError(''); }}>×</button>
-                        <h2>Gestionar Catálogos</h2>
-                        
-                        {/* Pestañas */}
-                        <div style={{ display: 'flex', gap: 8, marginBottom: 20, borderBottom: '2px solid #e0e6ef' }}>
-                          {[
-                            { key: 'actividad', label: 'Actividades' },
-                            { key: 'tramo', label: 'Tramos' },
-                            { key: 'trabajador', label: 'Trabajadores' },
-                            { key: 'supervisor', label: 'Supervisores' }
-                          ].map(tab => (
-                            <button
-                              key={tab.key}
-                              type="button"
-                              onClick={() => setManageModalTab(tab.key)}
-                              style={{
-                                padding: '10px 16px',
-                                border: 'none',
-                                background: manageModalTab === tab.key ? '#4F8A8B' : 'transparent',
-                                color: manageModalTab === tab.key ? '#fff' : (theme === 'dark' ? '#e0e6ef' : '#2c3e50'),
-                                borderRadius: '8px 8px 0 0',
-                                cursor: 'pointer',
-                                fontWeight: manageModalTab === tab.key ? 700 : 400,
-                                fontSize: 14
-                              }}
-                            >
-                              {tab.label}
-                            </button>
-                          ))}
-                        </div>
-
-                        {/* Contenido de la pestaña seleccionada */}
-                        <div style={{ maxHeight: '500px', overflowY: 'auto', overflowX: 'auto' }}>
-                          {manageModalTab === 'actividad' && (
-                            <>
-                              <h3>Actividades</h3>
-                              {catalogActivities.length === 0 ? (
-                                <p>No hay actividades registradas.</p>
-                              ) : (
-                                <table style={{ width: '100%', borderCollapse: 'collapse', background: theme === 'dark' ? '#232a36' : '#fafdff', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 1px 6px 0 rgba(44,62,80,0.07)' }}>
-                                  <thead>
-                                    <tr style={{ background: theme === 'dark' ? '#273043' : '#f0f6fa' }}>
-                                      <th style={{ padding: '12px 8px', fontWeight: 700, fontSize: 14, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', border: '1px solid #bbb', textAlign: 'left' }}>NOMBRE</th>
-                                      <th style={{ padding: '12px 8px', fontWeight: 700, fontSize: 14, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', border: '1px solid #bbb', textAlign: 'center' }}>ACCIÓN</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    {catalogActivities.map((activity, idx) => (
-                                      <tr key={activity._id || activity.id} style={{ background: idx % 2 === 0 ? (theme === 'dark' ? '#232a36' : '#f7fbfd') : (theme === 'dark' ? '#273043' : '#fff') }}>
-                                        <td style={{ border: '1px solid #bbb', padding: '10px 8px', fontSize: '14px' }}>{activity.nombre}</td>
-                                        <td style={{ border: '1px solid #bbb', padding: '10px 8px', textAlign: 'center' }}>
-                                          <button 
-                                            type="button" 
-                                            className="btn-danger" 
-                                            style={{ minWidth: '80px', fontSize: '12px', padding: '6px 12px' }}
-                                            onClick={async () => {
-                                              if (window.confirm(`¿Estás seguro de eliminar la actividad "${activity.nombre}"?`)) {
-                                                try {
-                                                  await axios.delete(`${API_URL}/catalog/activities/${activity._id || activity.id}`, {
-                                                    headers: { Authorization: `Bearer ${token}` }
-                                                  });
-                                                  setCatalogActivities(prev => prev.filter(a => (a._id || a.id) !== (activity._id || activity.id)));
-                                                } catch (err) {
-                                                  alert('Error al eliminar actividad: ' + (err.response?.data?.message || err.message));
-                                                }
-                                              }
-                                            }}
-                                          >
-                                            Eliminar
-                                          </button>
-                                        </td>
-                                      </tr>
-                                    ))}
-                                  </tbody>
-                                </table>
-                              )}
-                            </>
-                          )}
-
-                          {manageModalTab === 'tramo' && (
-                            <>
-                              <h3>Tramos</h3>
-                              {catalogTramos.length === 0 ? (
-                                <p>No hay tramos registrados.</p>
-                              ) : (
-                                <table style={{ width: '100%', borderCollapse: 'collapse', background: theme === 'dark' ? '#232a36' : '#fafdff', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 1px 6px 0 rgba(44,62,80,0.07)' }}>
-                                  <thead>
-                                    <tr style={{ background: theme === 'dark' ? '#273043' : '#f0f6fa' }}>
-                                      <th style={{ padding: '12px 8px', fontWeight: 700, fontSize: 14, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', border: '1px solid #bbb', textAlign: 'left' }}>NOMBRE</th>
-                                      <th style={{ padding: '12px 8px', fontWeight: 700, fontSize: 14, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', border: '1px solid #bbb', textAlign: 'center' }}>ACCIÓN</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    {catalogTramos.map((tramo, idx) => (
-                                      <tr key={tramo._id || tramo.id} style={{ background: idx % 2 === 0 ? (theme === 'dark' ? '#232a36' : '#f7fbfd') : (theme === 'dark' ? '#273043' : '#fff') }}>
-                                        <td style={{ border: '1px solid #bbb', padding: '10px 8px', fontSize: '14px' }}>{tramo.nombre}</td>
-                                        <td style={{ border: '1px solid #bbb', padding: '10px 8px', textAlign: 'center' }}>
-                                          <button 
-                                            type="button" 
-                                            className="btn-danger" 
-                                            style={{ minWidth: '80px', fontSize: '12px', padding: '6px 12px' }}
-                                            onClick={async () => {
-                                              if (window.confirm(`¿Estás seguro de eliminar el tramo "${tramo.nombre}"?`)) {
-                                                try {
-                                                  await axios.delete(`${API_URL}/catalog/tramos/${tramo._id || tramo.id}`, {
-                                                    headers: { Authorization: `Bearer ${token}` }
-                                                  });
-                                                  setCatalogTramos(prev => prev.filter(t => (t._id || t.id) !== (tramo._id || tramo.id)));
-                                                } catch (err) {
-                                                  alert('Error al eliminar tramo: ' + (err.response?.data?.message || err.message));
-                                                }
-                                              }
-                                            }}
-                                          >
-                                            Eliminar
-                                          </button>
-                                        </td>
-                                      </tr>
-                                    ))}
-                                  </tbody>
-                                </table>
-                              )}
-                            </>
-                          )}
-
-                          {manageModalTab === 'trabajador' && (
-                            <>
-                              <h3>Trabajadores</h3>
-                              {catalogWorkers.length === 0 ? (
-                                <p>No hay trabajadores registrados.</p>
-                              ) : (
-                                <table style={{ width: '100%', borderCollapse: 'collapse', background: theme === 'dark' ? '#232a36' : '#fafdff', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 1px 6px 0 rgba(44,62,80,0.07)' }}>
-                                  <thead>
-                                    <tr style={{ background: theme === 'dark' ? '#273043' : '#f0f6fa' }}>
-                                      <th style={{ padding: '12px 8px', fontWeight: 700, fontSize: 14, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', border: '1px solid #bbb', textAlign: 'left' }}>NOMBRE</th>
-                                      <th style={{ padding: '12px 8px', fontWeight: 700, fontSize: 14, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', border: '1px solid #bbb', textAlign: 'left' }}>RUT</th>
-                                      <th style={{ padding: '12px 8px', fontWeight: 700, fontSize: 14, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', border: '1px solid #bbb', textAlign: 'left' }}>CARGO</th>
-                                      <th style={{ padding: '12px 8px', fontWeight: 700, fontSize: 14, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', border: '1px solid #bbb', textAlign: 'center' }}>ACCIÓN</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    {catalogWorkers.map((worker, idx) => (
-                                      <tr key={worker._id || worker.id} style={{ background: idx % 2 === 0 ? (theme === 'dark' ? '#232a36' : '#f7fbfd') : (theme === 'dark' ? '#273043' : '#fff') }}>
-                                        <td style={{ border: '1px solid #bbb', padding: '10px 8px', fontSize: '14px' }}>{worker.nombre}</td>
-                                        <td style={{ border: '1px solid #bbb', padding: '10px 8px', fontSize: '14px' }}>{worker.rut}</td>
-                                        <td style={{ border: '1px solid #bbb', padding: '10px 8px', fontSize: '14px' }}>{worker.cargo}</td>
-                                        <td style={{ border: '1px solid #bbb', padding: '10px 8px', textAlign: 'center' }}>
-                                          <button 
-                                            type="button" 
-                                            className="btn-danger" 
-                                            style={{ minWidth: '80px', fontSize: '12px', padding: '6px 12px' }}
-                                            onClick={async () => {
-                                              if (window.confirm(`¿Estás seguro de eliminar al trabajador "${worker.nombre}"?`)) {
-                                                try {
-                                                  await axios.delete(`${API_URL}/catalog/workers/${worker._id || worker.id}`, {
-                                                    headers: { Authorization: `Bearer ${token}` }
-                                                  });
-                                                  setCatalogWorkers(prev => prev.filter(w => (w._id || w.id) !== (worker._id || worker.id)));
-                                                } catch (err) {
-                                                  alert('Error al eliminar trabajador: ' + (err.response?.data?.message || err.message));
-                                                }
-                                              }
-                                            }}
-                                          >
-                                            Eliminar
-                                          </button>
-                                        </td>
-                                      </tr>
-                                    ))}
-                                  </tbody>
-                                </table>
-                              )}
-                            </>
-                          )}
-
-                          {manageModalTab === 'supervisor' && (
-                            <>
-                              <h3>Supervisores</h3>
-                              {catalogSupervisors.length === 0 ? (
-                                <p>No hay supervisores registrados.</p>
-                              ) : (
-                                <table style={{ width: '100%', borderCollapse: 'collapse', background: theme === 'dark' ? '#232a36' : '#fafdff', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 1px 6px 0 rgba(44,62,80,0.07)' }}>
-                                  <thead>
-                                    <tr style={{ background: theme === 'dark' ? '#273043' : '#f0f6fa' }}>
-                                      <th style={{ padding: '12px 8px', fontWeight: 700, fontSize: 14, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', border: '1px solid #bbb', textAlign: 'left' }}>NOMBRE</th>
-                                      <th style={{ padding: '12px 8px', fontWeight: 700, fontSize: 14, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', border: '1px solid #bbb', textAlign: 'left' }}>RUT</th>
-                                      <th style={{ padding: '12px 8px', fontWeight: 700, fontSize: 14, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', border: '1px solid #bbb', textAlign: 'center' }}>ACCIÓN</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    {catalogSupervisors.map((supervisor, idx) => (
-                                      <tr key={supervisor._id || supervisor.id} style={{ background: idx % 2 === 0 ? (theme === 'dark' ? '#232a36' : '#f7fbfd') : (theme === 'dark' ? '#273043' : '#fff') }}>
-                                        <td style={{ border: '1px solid #bbb', padding: '10px 8px', fontSize: '14px' }}>{supervisor.nombre}</td>
-                                        <td style={{ border: '1px solid #bbb', padding: '10px 8px', fontSize: '14px' }}>{supervisor.rut}</td>
-                                        <td style={{ border: '1px solid #bbb', padding: '10px 8px', textAlign: 'center' }}>
-                                          <button 
-                                            type="button" 
-                                            className="btn-danger" 
-                                            style={{ minWidth: '80px', fontSize: '12px', padding: '6px 12px' }}
-                                            onClick={async () => {
-                                              if (window.confirm(`¿Estás seguro de eliminar al supervisor "${supervisor.nombre}"?`)) {
-                                                try {
-                                                  await axios.delete(`${API_URL}/catalog/supervisors/${supervisor._id || supervisor.id}`, {
-                                                    headers: { Authorization: `Bearer ${token}` }
-                                                  });
-                                                  setCatalogSupervisors(prev => prev.filter(s => (s._id || s.id) !== (supervisor._id || supervisor.id)));
-                                                } catch (err) {
-                                                  alert('Error al eliminar supervisor: ' + (err.response?.data?.message || err.message));
-                                                }
-                                              }
-                                            }}
-                                          >
-                                            Eliminar
-                                          </button>
-                                        </td>
-                                      </tr>
-                                    ))}
-                                  </tbody>
-                                </table>
-                              )}
-                            </>
-                          )}
-                        </div>
-
-                        {modalError && <div className="error-box">{modalError}</div>}
-                        <div style={{ marginTop: '20px', textAlign: 'center' }}>
-                          <button type="button" className="btn-primary" onClick={() => setShowManageModal(false)}>Cerrar</button>
-                        </div>
                       </div>
                     </div>
                   )}
