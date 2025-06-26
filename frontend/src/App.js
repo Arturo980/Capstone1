@@ -1244,157 +1244,245 @@ const App = () => {
                               {catalogWorkers.length === 0 ? (
                                 <div style={{ 
                                   textAlign: 'center', 
-                                  padding: '40px 20px',
+                                  padding: '60px 40px',
                                   color: theme === 'dark' ? '#b8c5d1' : '#6c757d',
-                                  fontSize: '16px'
+                                  fontSize: '16px',
+                                  background: theme === 'dark' ? '#1e252d' : '#f8f9fa',
+                                  borderRadius: '12px',
+                                  border: theme === 'dark' ? '2px dashed #3d4b5c' : '2px dashed #dee2e6'
                                 }}>
-                                  <div style={{ fontSize: '48px', marginBottom: '16px' }}>👷</div>
-                                  <p style={{ margin: '0 0 8px 0', fontWeight: '500' }}>No hay trabajadores registrados</p>
-                                  <p style={{ margin: 0, fontSize: '14px' }}>Comienza agregando tu primer trabajador</p>
+                                  <div style={{ 
+                                    fontSize: '64px', 
+                                    marginBottom: '20px',
+                                    filter: 'grayscale(30%)'
+                                  }}>👷‍♂️👷‍♀️</div>
+                                  <h3 style={{ 
+                                    margin: '0 0 12px 0', 
+                                    fontWeight: '600',
+                                    fontSize: '20px',
+                                    color: theme === 'dark' ? '#e0e6ef' : '#495057'
+                                  }}>No hay trabajadores registrados</h3>
+                                  <p style={{ 
+                                    margin: '0 0 20px 0', 
+                                    fontSize: '14px',
+                                    lineHeight: '1.5'
+                                  }}>
+                                    Comienza agregando tu primer trabajador para gestionar el personal del proyecto
+                                  </p>
+                                  <button 
+                                    type="button" 
+                                    className="btn-primary" 
+                                    style={{ 
+                                      fontSize: '14px',
+                                      padding: '10px 20px',
+                                      borderRadius: '8px',
+                                      fontWeight: '600'
+                                    }}
+                                    onClick={() => setShowManageModal(true)}
+                                  >
+                                    ➕ Agregar Primer Trabajador
+                                  </button>
                                 </div>
                               ) : (
                                 <div>
                                   <div style={{ 
-                                    marginBottom: '16px', 
-                                    color: theme === 'dark' ? '#b8c5d1' : '#6c757d',
-                                    fontSize: '14px',
-                                    fontWeight: '500'
+                                    marginBottom: '20px', 
+                                    padding: '12px 20px',
+                                    background: theme === 'dark' ? '#273043' : '#e8f4f8',
+                                    borderRadius: '8px',
+                                    border: theme === 'dark' ? '1px solid #3d4b5c' : '1px solid #b8e6ff',
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center'
                                   }}>
-                                    Total de trabajadores: {catalogWorkers.length}
+                                    <div style={{
+                                      color: theme === 'dark' ? '#7ed6df' : '#0984e3',
+                                      fontSize: '16px',
+                                      fontWeight: '600',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '8px'
+                                    }}>
+                                      <span style={{ fontSize: '20px' }}>👥</span>
+                                      Total de trabajadores: {catalogWorkers.length}
+                                    </div>
                                   </div>
                                   <div style={{ 
-                                    maxHeight: '400px', 
+                                    maxHeight: '500px', 
                                     overflowY: 'auto',
                                     overflowX: 'auto',
-                                    borderRadius: '8px',
-                                    border: theme === 'dark' ? '1px solid #3d4b5c' : '1px solid #e0e6ef'
+                                    borderRadius: '12px',
+                                    border: theme === 'dark' ? '2px solid #3d4b5c' : '2px solid #e0e6ef',
+                                    boxShadow: '0 4px 16px 0 rgba(44,62,80,0.08)'
                                   }}>
                                     <table style={{ 
                                       width: '100%',
-                                      minWidth: '550px',
+                                      minWidth: '750px',
                                       borderCollapse: 'collapse', 
                                       background: theme === 'dark' ? '#232a36' : '#ffffff',
-                                      tableLayout: 'fixed'
+                                      tableLayout: 'auto'
                                     }}>
                                       <thead>
-                                        <tr style={{ background: theme === 'dark' ? '#273043' : '#f8f9fa' }}>
+                                        <tr style={{ 
+                                          background: theme === 'dark' ? '#273043' : '#f8f9fa',
+                                          borderBottom: theme === 'dark' ? '2px solid #3d4b5c' : '2px solid #e0e6ef'
+                                        }}>
                                           <th style={{ 
-                                            padding: '12px 10px', 
+                                            padding: '16px 20px', 
                                             fontWeight: 700, 
-                                            fontSize: '12px', 
+                                            fontSize: '14px', 
                                             color: theme === 'dark' ? '#7ed6df' : '#2c3e50', 
                                             border: 'none',
                                             textAlign: 'left',
-                                            letterSpacing: '0.3px',
-                                            width: '40%'
-                                          }}>NOMBRE</th>
+                                            letterSpacing: '0.5px',
+                                            textTransform: 'uppercase',
+                                            minWidth: '200px'
+                                          }}>👤 NOMBRE COMPLETO</th>
                                           <th style={{ 
-                                            padding: '12px 10px', 
+                                            padding: '16px 20px', 
                                             fontWeight: 700, 
-                                            fontSize: '12px', 
+                                            fontSize: '14px', 
                                             color: theme === 'dark' ? '#7ed6df' : '#2c3e50', 
                                             border: 'none',
                                             textAlign: 'left',
-                                            letterSpacing: '0.3px',
-                                            width: '28%'
+                                            letterSpacing: '0.5px',
+                                            textTransform: 'uppercase',
+                                            minWidth: '130px'
                                           }}>RUT</th>
                                           <th style={{ 
-                                            padding: '12px 10px', 
+                                            padding: '16px 20px', 
                                             fontWeight: 700, 
-                                            fontSize: '12px', 
+                                            fontSize: '14px', 
                                             color: theme === 'dark' ? '#7ed6df' : '#2c3e50', 
                                             border: 'none',
                                             textAlign: 'left',
-                                            letterSpacing: '0.3px',
-                                            width: '22%'
+                                            letterSpacing: '0.5px',
+                                            textTransform: 'uppercase',
+                                            minWidth: '180px'
                                           }}>CARGO</th>
                                           <th style={{ 
-                                            padding: '12px 10px', 
+                                            padding: '16px 20px', 
                                             fontWeight: 700, 
-                                            fontSize: '12px', 
+                                            fontSize: '14px', 
                                             color: theme === 'dark' ? '#7ed6df' : '#2c3e50', 
                                             border: 'none',
                                             textAlign: 'center',
-                                            letterSpacing: '0.3px',
-                                            width: '10%'
-                                          }}>ACCIÓN</th>
+                                            letterSpacing: '0.5px',
+                                            textTransform: 'uppercase',
+                                            minWidth: '120px'
+                                          }}>⚙️ ACCIONES</th>
                                         </tr>
                                       </thead>
                                       <tbody>
                                         {catalogWorkers.map((worker, idx) => (
                                           <tr key={worker._id || worker.id} style={{ 
                                             background: idx % 2 === 0 ? (theme === 'dark' ? '#232a36' : '#ffffff') : (theme === 'dark' ? '#273043' : '#f8f9fa'),
-                                            transition: 'background-color 0.2s ease'
-                                          }}>
+                                            transition: 'all 0.3s ease',
+                                            borderBottom: theme === 'dark' ? '1px solid #3d4b5c' : '1px solid #e9ecef'
+                                          }}
+                                          onMouseEnter={(e) => {
+                                            e.currentTarget.style.background = theme === 'dark' ? '#2c3440' : '#e8f4f8';
+                                            e.currentTarget.style.transform = 'translateY(-1px)';
+                                          }}
+                                          onMouseLeave={(e) => {
+                                            e.currentTarget.style.background = idx % 2 === 0 ? (theme === 'dark' ? '#232a36' : '#ffffff') : (theme === 'dark' ? '#273043' : '#f8f9fa');
+                                            e.currentTarget.style.transform = 'translateY(0)';
+                                          }}
+                                          >
                                             <td style={{ 
                                               border: 'none', 
-                                              padding: '12px 10px', 
-                                              fontSize: '13px',
+                                              padding: '18px 20px', 
+                                              fontSize: '15px',
                                               color: theme === 'dark' ? '#e0e6ef' : '#2c3e50',
-                                              fontWeight: '500',
-                                              wordWrap: 'break-word',
-                                              overflow: 'hidden'
+                                              fontWeight: '600',
+                                              lineHeight: '1.4'
                                             }}>
                                               {worker.nombre}
                                             </td>
                                             <td style={{ 
                                               border: 'none', 
-                                              padding: '12px 10px', 
-                                              fontSize: '13px',
-                                              color: theme === 'dark' ? '#b8c5d1' : '#6c757d',
-                                              fontFamily: 'monospace',
-                                              wordWrap: 'break-word'
+                                              padding: '18px 20px', 
+                                              fontSize: '14px',
+                                              color: theme === 'dark' ? '#b8c5d1' : '#495057',
+                                              fontFamily: 'Monaco, Consolas, monospace',
+                                              fontWeight: '600',
+                                              letterSpacing: '0.5px'
                                             }}>
-                                              {worker.rut}
+                                              <div style={{
+                                                background: theme === 'dark' ? '#1a2332' : '#f8f9fa',
+                                                padding: '8px 12px',
+                                                borderRadius: '6px',
+                                                border: theme === 'dark' ? '1px solid #3d4b5c' : '1px solid #dee2e6',
+                                                display: 'inline-block',
+                                                minWidth: '110px',
+                                                textAlign: 'center'
+                                              }}>
+                                                {worker.rut}
+                                              </div>
                                             </td>
                                             <td style={{ 
                                               border: 'none', 
-                                              padding: '12px 10px', 
-                                              fontSize: '12px',
-                                              color: theme === 'dark' ? '#b8c5d1' : '#6c757d'
+                                              padding: '18px 20px', 
+                                              fontSize: '13px',
+                                              color: theme === 'dark' ? '#b8c5d1' : '#495057'
                                             }}>
                                               <span style={{
                                                 background: theme === 'dark' ? '#3d4b5c' : '#e9ecef',
-                                                padding: '3px 8px',
-                                                borderRadius: '4px',
-                                                fontSize: '11px',
-                                                fontWeight: '500',
+                                                padding: '8px 16px',
+                                                borderRadius: '20px',
+                                                fontSize: '12px',
+                                                fontWeight: '600',
                                                 display: 'inline-block',
                                                 textAlign: 'center',
-                                                wordWrap: 'break-word'
+                                                textTransform: 'uppercase',
+                                                letterSpacing: '0.3px',
+                                                border: theme === 'dark' ? '1px solid #4a5568' : '1px solid #ced4da',
+                                                minWidth: '120px'
                                               }}>
                                                 {worker.cargo}
                                               </span>
                                             </td>
                                             <td style={{ 
                                               border: 'none', 
-                                              padding: '12px 10px', 
+                                              padding: '18px 20px', 
                                               textAlign: 'center' 
                                             }}>
                                               <button 
                                                 type="button" 
                                                 className="btn-danger" 
                                                 style={{ 
-                                                  width: '60px',
-                                                  fontSize: '10px', 
-                                                  padding: '4px 5px',
-                                                  borderRadius: '4px',
-                                                  fontWeight: '500',
+                                                  minWidth: '100px',
+                                                  fontSize: '12px', 
+                                                  padding: '8px 16px',
+                                                  borderRadius: '8px',
+                                                  fontWeight: '600',
                                                   display: 'flex',
                                                   alignItems: 'center',
                                                   justifyContent: 'center',
-                                                  gap: '2px',
-                                                  margin: '0 auto'
+                                                  gap: '6px',
+                                                  margin: '0 auto',
+                                                  transition: 'all 0.2s ease',
+                                                  textTransform: 'uppercase',
+                                                  letterSpacing: '0.3px'
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                  e.target.style.transform = 'scale(1.05)';
+                                                  e.target.style.boxShadow = '0 4px 12px rgba(220, 53, 69, 0.3)';
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                  e.target.style.transform = 'scale(1)';
+                                                  e.target.style.boxShadow = 'none';
                                                 }}
                                                 onClick={async () => {
-                                                  if (window.confirm(`¿Estás seguro de eliminar al trabajador "${worker.nombre}"?`)) {
+                                                  if (window.confirm(`¿Estás seguro de eliminar al trabajador "${worker.nombre}"?\n\nEsta acción no se puede deshacer.`)) {
                                                     try {
                                                       await axios.delete(`${API_URL}/catalog/workers/${worker._id || worker.id}`, {
                                                         headers: { Authorization: `Bearer ${token}` }
                                                       });
                                                       setCatalogWorkers(prev => prev.filter(w => (w._id || w.id) !== (worker._id || worker.id)));
+                                                      alert('✅ Trabajador eliminado correctamente');
                                                     } catch (err) {
-                                                      alert('Error al eliminar trabajador: ' + (err.response?.data?.message || err.message));
+                                                      alert('❌ Error al eliminar trabajador: ' + (err.response?.data?.message || err.message));
                                                     }
                                                   }
                                                 }}
