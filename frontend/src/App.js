@@ -364,7 +364,6 @@ const App = () => {
 
   // Estado para el modal de gestión general
   const [showManageModal, setShowManageModal] = useState(false);
-  const [manageModalTab, setManageModalTab] = useState('actividad'); // 'actividad' | 'tramo' | 'trabajador' | 'supervisor'
 
   // --- Manejo de cierre de sesión por inactividad con modal y temporizador ---
   const [showInactivityModal, setShowInactivityModal] = useState(false);
