@@ -118,13 +118,13 @@ app.post('/auth/login', async (req, res) => {
   }
 });
 
-// Create a daily report - updated to accept area, jornada, supervisor, team, actividades
+// Create a daily report - updated to accept obra, jornada, supervisor, team, actividades
 app.post('/reports', authenticateToken, async (req, res) => {
   // Validar y guardar correctamente todos los campos
   const { area, jornada, supervisor, team, actividades, avances, interferencias, detenciones, comentarios } = req.body;
   
   if (!area || !jornada || !supervisor) {
-    return res.status(400).json({ message: 'Área, jornada y supervisor son requeridos' });
+    return res.status(400).json({ message: 'Obra, jornada y supervisor son requeridos' });
   }
   if (!Array.isArray(team) || team.length === 0) {
     return res.status(400).json({ message: 'El equipo es requerido y no puede estar vacío' });

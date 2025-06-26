@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
 import './App.css';
 import Dashboard from './Dashboard';
@@ -16,8 +16,7 @@ const initialTeamRow = {
   workerId: '',
   tramoId: '',
   activityId: '',
-  horaInicio: '',
-  horaFin: ''
+  duracion: ''
 };
 
 const API_URL = process.env.REACT_APP_API_URL;
@@ -182,7 +181,7 @@ const App = () => {
   const handleReportSubmit = async () => {
     // Validación básica
     if (!area.trim() || !jornada.trim() || !supervisor.trim()) {
-      alert('Debes completar área, jornada y supervisor.');
+      alert('Debes completar obra, jornada y supervisor.');
       return;
     }
     if (team.length === 0 || team.every(row => Object.values(row).every(val => !val))) {
@@ -358,63 +357,80 @@ const App = () => {
     }
   };
 
-  // NUEVO: Cálculo de horas trabajadas
-  function calcularHoras(inicio, fin) {
-    if (!inicio || !fin) return '';
-    const [h1, m1] = inicio.split(':').map(Number);
-    const [h2, m2] = fin.split(':').map(Number);
-    let diff = (h2 * 60 + m2) - (h1 * 60 + m1);
-    if (diff < 0) diff += 24 * 60;
-    return `${Math.floor(diff / 60)}:${(diff % 60).toString().padStart(2, '0')}`;
-  }
-
   // Estado para modals del panel admin
   const [adminModal, setAdminModal] = useState(null); // 'actividad' | 'tramo' | 'trabajador' | null
   const [modalLoading, setModalLoading] = useState(false);
   const [modalError, setModalError] = useState('');
 
+  // Estado para el modal de gestión general
+  const [showManageModal, setShowManageModal] = useState(false);
+  const [manageModalTab, setManageModalTab] = useState('actividad'); // 'actividad' | 'tramo' | 'trabajador' | 'supervisor'
+
   // --- Manejo de cierre de sesión por inactividad con modal y temporizador ---
   const [showInactivityModal, setShowInactivityModal] = useState(false);
   const [inactivitySeconds, setInactivitySeconds] = useState(30);
+
+  // Prevenir scroll del body cuando hay modales abiertos
+  useEffect(() => {
+    const isModalOpen = adminModal || showDeleteModal || showInactivityModal || showManageModal;
+    if (isModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [adminModal, showDeleteModal, showInactivityModal, showManageModal]);
+  const timeoutRef = useRef(null);
+  const countdownRef = useRef(null);
+  
+  const startCountdown = useCallback(() => {
+    setInactivitySeconds(30);
+    setShowInactivityModal(true);
+    countdownRef.current = setInterval(() => {
+      setInactivitySeconds(prev => {
+        if (prev <= 1) {
+          clearInterval(countdownRef.current);
+          setShowInactivityModal(false);
+          handleLogout();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  }, []);
+
+  const resetTimer = useCallback(() => {
+    // Limpiar temporizador principal
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    // Limpiar countdown si está activo
+    if (countdownRef.current) {
+      clearInterval(countdownRef.current);
+    }
+    // Ocultar modal si está visible
+    setShowInactivityModal(false);
+    setInactivitySeconds(30);
+    // Reiniciar temporizador principal
+    timeoutRef.current = setTimeout(startCountdown, 10 * 60 * 1000); // 10 minutos
+  }, [startCountdown]);
+
   useEffect(() => {
     if (!token) return;
-    let timeoutId;
-    let countdownId;
-    const startCountdown = () => {
-      setInactivitySeconds(30);
-      setShowInactivityModal(true);
-      countdownId = setInterval(() => {
-        setInactivitySeconds(prev => {
-          if (prev <= 1) {
-            clearInterval(countdownId);
-            setShowInactivityModal(false);
-            handleLogout();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    };
-    const resetTimer = () => {
-      clearTimeout(timeoutId);
-      if (showInactivityModal) {
-        setShowInactivityModal(false);
-        setInactivitySeconds(30);
-        clearInterval(countdownId);
-      }
-      timeoutId = setTimeout(startCountdown, 10 * 60 * 1000); // 10 minutos
-    };
+    
     // Eventos que reinician el temporizador
     const events = ['mousemove', 'keydown', 'mousedown', 'touchstart', 'scroll'];
     events.forEach(event => window.addEventListener(event, resetTimer));
-    resetTimer();
+    resetTimer(); // Inicializar
+    
     return () => {
-      clearTimeout(timeoutId);
-      clearInterval(countdownId);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      if (countdownRef.current) clearInterval(countdownRef.current);
       events.forEach(event => window.removeEventListener(event, resetTimer));
     };
-    // eslint-disable-next-line
-  }, [token]);
+  }, [token, resetTimer]);
 
   // Exportar informes a Excel (una fila por integrante del equipo, con nombre, rut y cargo separados)
   const exportToExcel = () => {
@@ -424,7 +440,7 @@ const App = () => {
       (report.team || [{}]).forEach(row => {
         data.push({
           'Usuario': report.username || '',
-          'Área': report.area,
+          'Obra': report.area,
           'Jornada': report.jornada,
           'Supervisor': report.supervisor,
           'Fecha de Envío': new Date(report.dateSubmitted).toLocaleString(),
@@ -435,9 +451,7 @@ const App = () => {
           'Tipo de Asistencia': row.tipoAsist || '',
           'Tramo': row.tramo || (catalogTramos.find(t => t.id === row.tramoId || t._id === row.tramoId)?.nombre || ''),
           'Actividad': (catalogActivities.find(a => a.id === row.activityId || a._id === row.activityId)?.nombre || row.activityId || ''),
-          'Hora Inicio': row.horaInicio || '',
-          'Hora Fin': row.horaFin || '',
-          'Horas Trabajadas': row.horaInicio && row.horaFin ? calcularHoras(row.horaInicio, row.horaFin) : '',
+          'Duración': row.duracion || '',
           'Avances': (report.avances || []).map(a => a.descripcion).join('; '),
           'Interferencias': (report.interferencias || []).map(i => i.descripcion).join('; '),
           'Detenciones': (report.detenciones || []).map(d => d.descripcion).join('; '),
@@ -460,7 +474,7 @@ const App = () => {
             <h3>Sesión a punto de cerrarse por inactividad</h3>
             <p>¿Deseas continuar? Tienes <span style={{fontWeight:'bold',color:'#d63031',fontSize:22}}>{inactivitySeconds}</span> segundos para responder.</p>
             <div style={{marginTop:24,display:'flex',gap:16,justifyContent:'center'}}>
-              <button className="btn-primary" onClick={() => { setShowInactivityModal(false); setInactivitySeconds(30); }}>Seguir conectado</button>
+              <button className="btn-primary" onClick={resetTimer}>Seguir conectado</button>
             </div>
           </div>
         </div>
@@ -616,7 +630,7 @@ const App = () => {
                           <button type="button" className="btn-primary" style={{ minWidth: 100 }} onClick={() => setAdminModal('tramo')}>Agregar Tramo</button>
                           <button type="button" className="btn-primary" style={{ minWidth: 100 }} onClick={() => setAdminModal('trabajador')}>Agregar Trabajador</button>
                           <button type="button" className="btn-primary" style={{ minWidth: 100 }} onClick={() => setAdminModal('supervisor')}>Agregar Supervisor</button>
-                          <button type="button" className="btn-primary" style={{ minWidth: 100 }} onClick={() => setAdminModal('gestionarSupervisores')}>Gestionar Supervisores</button>
+                          <button type="button" className="btn-primary" style={{ minWidth: 100 }} onClick={() => setShowManageModal(true)}>Gestionar Catálogos</button>
                         </div>
                       )}
                     </div>
@@ -632,7 +646,7 @@ const App = () => {
                     <h2>Equipo y Avances</h2>
                     <div className="row">
                       <div className="col">
-                        <input type="text" className="input" placeholder="Área" value={area} onChange={e => setArea(e.target.value)} />
+                        <input type="text" className="input" placeholder="Obra" value={area} onChange={e => setArea(e.target.value)} />
                       </div>
                       <div className="col">
                         <select className="input" value={jornada} onChange={e => setJornada(e.target.value)}>
@@ -660,9 +674,7 @@ const App = () => {
                             <th>Cargo</th>
                             <th>Tramo</th>
                             <th>Actividad</th>
-                            <th>Hora Inicio</th>
-                            <th>Hora Fin</th>
-                            <th>Horas Trabajadas</th>
+                            <th>Duración</th>
                             <th>Tipo de Asistencia</th>
                           </tr>
                         </thead>
@@ -694,13 +706,17 @@ const App = () => {
                                     <span>{row.nombre || ''}</span>
                                   </td>
                                   <td>
-                                    <select value={row.cargo || ''} onChange={e => handleTeamChange(idx, 'cargo', e.target.value)} className="input-table">
-                                      <option value="">Selecciona</option>
-                                      {uniqueCargos.map(cargo => (
-                                        <option key={cargo} value={cargo}>{cargo}</option>
-                                      ))}
-                                      <option value="__custom">Otro...</option>
-                                    </select>
+                                    {row.workerId ? (
+                                      <span>{row.cargo || ''}</span>
+                                    ) : (
+                                      <select value={row.cargo || ''} onChange={e => handleTeamChange(idx, 'cargo', e.target.value)} className="input-table">
+                                        <option value="">Selecciona</option>
+                                        {uniqueCargos.map(cargo => (
+                                          <option key={cargo} value={cargo}>{cargo}</option>
+                                        ))}
+                                        <option value="__custom">Otro...</option>
+                                      </select>
+                                    )}
                                     {row.cargo === '__custom' && (
                                       <input type="text" className="input-table" placeholder="Escribe el cargo" onBlur={e => handleTeamChange(idx, 'cargo', e.target.value)} autoFocus />
                                     )}
@@ -722,12 +738,14 @@ const App = () => {
                                     </select>
                                   </td>
                                   <td>
-                                    <input type="time" value={row.horaInicio || ''} onChange={e => handleTeamChange(idx, 'horaInicio', e.target.value)} className="input-table" />
+                                    <input 
+                                      type="text" 
+                                      value={row.duracion || ''} 
+                                      onChange={e => handleTeamChange(idx, 'duracion', e.target.value)} 
+                                      className="input-table" 
+                                      placeholder="ej: 8h, 4.5h, 480min"
+                                    />
                                   </td>
-                                  <td>
-                                    <input type="time" value={row.horaFin || ''} onChange={e => handleTeamChange(idx, 'horaFin', e.target.value)} className="input-table" />
-                                  </td>
-                                  <td>{calcularHoras(row.horaInicio, row.horaFin)}</td>
                                   <td>
                                     <select value={row.tipoAsist || ''} onChange={e => handleTeamChange(idx, 'tipoAsist', e.target.value)} className="input-table">
                                       <option value="">Selecciona</option>
@@ -739,7 +757,7 @@ const App = () => {
                                 </tr>
                                 {team.length > 1 && (
                                   <tr>
-                                    <td colSpan="10" style={{ textAlign: 'right', padding: '4px 8px', background: theme === 'dark' ? '#1a1f28' : '#f9f9f9', borderTop: 'none' }}>
+                                    <td colSpan="8" style={{ textAlign: 'right', padding: '4px 8px', background: theme === 'dark' ? '#1a1f28' : '#f9f9f9', borderTop: 'none' }}>
                                       <button 
                                         type="button" 
                                         onClick={() => handleRemoveTeamRow(idx)} 
@@ -849,7 +867,7 @@ const App = () => {
                         }}>
                           <div style={{ marginBottom: 18 }}>
                             <span style={{ fontWeight: 700, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', fontSize: 18 }}>Usuario:</span> <span style={{ fontWeight: 400 }}>{report.username}</span><br />
-                            <span style={{ fontWeight: 700, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', fontSize: 18 }}>Área:</span> <span style={{ fontWeight: 400 }}>{report.area}</span><br />
+                            <span style={{ fontWeight: 700, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', fontSize: 18 }}>Obra:</span> <span style={{ fontWeight: 400 }}>{report.area}</span><br />
                             <span style={{ fontWeight: 700, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', fontSize: 18 }}>Jornada:</span> <span style={{ fontWeight: 400 }}>{report.jornada}</span><br />
                             <span style={{ fontWeight: 700, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', fontSize: 18 }}>Supervisor:</span> <span style={{ fontWeight: 400 }}>{report.supervisor}</span>
                           </div>
@@ -1090,65 +1108,237 @@ const App = () => {
                       </div>
                     </div>
                   )}
-                  {adminModal === 'gestionarSupervisores' && (
+                  {/* MODAL DE GESTIÓN GENERAL */}
+                  {showManageModal && (
                     <div className="modal-bg">
-                      <div className="modal-box" style={{ minWidth: '600px', maxWidth: '90vw' }}>
-                        <button className="modal-close" onClick={() => { setAdminModal(null); setModalError(''); }}>×</button>
-                        <h2>Gestionar Supervisores</h2>
-                        {catalogSupervisors.length === 0 ? (
-                          <p>No hay supervisores registrados.</p>
-                        ) : (
-                          <div style={{ maxHeight: '500px', overflowY: 'auto', overflowX: 'auto' }}>
-                            <table style={{ 
-                              width: '100%', 
-                              borderCollapse: 'collapse', 
-                              background: theme === 'dark' ? '#232a36' : '#fafdff', 
-                              borderRadius: '8px', 
-                              overflow: 'hidden', 
-                              boxShadow: '0 1px 6px 0 rgba(44,62,80,0.07)' 
-                            }}>
-                              <thead>
-                                <tr style={{ background: theme === 'dark' ? '#273043' : '#f0f6fa' }}>
-                                  <th style={{ padding: '12px 8px', fontWeight: 700, fontSize: 14, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', border: '1px solid #bbb', textAlign: 'left' }}>NOMBRE</th>
-                                  <th style={{ padding: '12px 8px', fontWeight: 700, fontSize: 14, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', border: '1px solid #bbb', textAlign: 'left' }}>RUT</th>
-                                  <th style={{ padding: '12px 8px', fontWeight: 700, fontSize: 14, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', border: '1px solid #bbb', textAlign: 'center' }}>ACCIÓN</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {catalogSupervisors.map((supervisor, idx) => (
-                                  <tr key={supervisor._id || supervisor.id} style={{ background: idx % 2 === 0 ? (theme === 'dark' ? '#232a36' : '#f7fbfd') : (theme === 'dark' ? '#273043' : '#fff') }}>
-                                    <td style={{ border: '1px solid #bbb', padding: '10px 8px', fontSize: '14px' }}>{supervisor.nombre}</td>
-                                    <td style={{ border: '1px solid #bbb', padding: '10px 8px', fontSize: '14px' }}>{supervisor.rut}</td>
-                                    <td style={{ border: '1px solid #bbb', padding: '10px 8px', textAlign: 'center' }}>
-                                      <button 
-                                        type="button" 
-                                        className="btn-danger" 
-                                        style={{ minWidth: '80px', fontSize: '12px', padding: '6px 12px' }}
-                                        onClick={async () => {
-                                          if (window.confirm(`¿Estás seguro de eliminar al supervisor "${supervisor.nombre}"?`)) {
-                                            try {
-                                              await axios.delete(`${API_URL}/catalog/supervisors/${supervisor._id || supervisor.id}`, {
-                                                headers: { Authorization: `Bearer ${token}` }
-                                              });
-                                              setCatalogSupervisors(prev => prev.filter(s => (s._id || s.id) !== (supervisor._id || supervisor.id)));
-                                            } catch (err) {
-                                              alert('Error al eliminar supervisor: ' + (err.response?.data?.message || err.message));
-                                            }
-                                          }
-                                        }}
-                                      >
-                                        Eliminar
-                                      </button>
-                                    </td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        )}
+                      <div className="modal-box" style={{ minWidth: '700px', maxWidth: '90vw', maxHeight: '90vh' }}>
+                        <button className="modal-close" onClick={() => { setShowManageModal(false); setModalError(''); }}>×</button>
+                        <h2>Gestionar Catálogos</h2>
+                        
+                        {/* Pestañas */}
+                        <div style={{ display: 'flex', gap: 8, marginBottom: 20, borderBottom: '2px solid #e0e6ef' }}>
+                          {[
+                            { key: 'actividad', label: 'Actividades' },
+                            { key: 'tramo', label: 'Tramos' },
+                            { key: 'trabajador', label: 'Trabajadores' },
+                            { key: 'supervisor', label: 'Supervisores' }
+                          ].map(tab => (
+                            <button
+                              key={tab.key}
+                              type="button"
+                              onClick={() => setManageModalTab(tab.key)}
+                              style={{
+                                padding: '10px 16px',
+                                border: 'none',
+                                background: manageModalTab === tab.key ? '#4F8A8B' : 'transparent',
+                                color: manageModalTab === tab.key ? '#fff' : (theme === 'dark' ? '#e0e6ef' : '#2c3e50'),
+                                borderRadius: '8px 8px 0 0',
+                                cursor: 'pointer',
+                                fontWeight: manageModalTab === tab.key ? 700 : 400,
+                                fontSize: 14
+                              }}
+                            >
+                              {tab.label}
+                            </button>
+                          ))}
+                        </div>
+
+                        {/* Contenido de la pestaña seleccionada */}
+                        <div style={{ maxHeight: '500px', overflowY: 'auto', overflowX: 'auto' }}>
+                          {manageModalTab === 'actividad' && (
+                            <>
+                              <h3>Actividades</h3>
+                              {catalogActivities.length === 0 ? (
+                                <p>No hay actividades registradas.</p>
+                              ) : (
+                                <table style={{ width: '100%', borderCollapse: 'collapse', background: theme === 'dark' ? '#232a36' : '#fafdff', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 1px 6px 0 rgba(44,62,80,0.07)' }}>
+                                  <thead>
+                                    <tr style={{ background: theme === 'dark' ? '#273043' : '#f0f6fa' }}>
+                                      <th style={{ padding: '12px 8px', fontWeight: 700, fontSize: 14, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', border: '1px solid #bbb', textAlign: 'left' }}>NOMBRE</th>
+                                      <th style={{ padding: '12px 8px', fontWeight: 700, fontSize: 14, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', border: '1px solid #bbb', textAlign: 'center' }}>ACCIÓN</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {catalogActivities.map((activity, idx) => (
+                                      <tr key={activity._id || activity.id} style={{ background: idx % 2 === 0 ? (theme === 'dark' ? '#232a36' : '#f7fbfd') : (theme === 'dark' ? '#273043' : '#fff') }}>
+                                        <td style={{ border: '1px solid #bbb', padding: '10px 8px', fontSize: '14px' }}>{activity.nombre}</td>
+                                        <td style={{ border: '1px solid #bbb', padding: '10px 8px', textAlign: 'center' }}>
+                                          <button 
+                                            type="button" 
+                                            className="btn-danger" 
+                                            style={{ minWidth: '80px', fontSize: '12px', padding: '6px 12px' }}
+                                            onClick={async () => {
+                                              if (window.confirm(`¿Estás seguro de eliminar la actividad "${activity.nombre}"?`)) {
+                                                try {
+                                                  await axios.delete(`${API_URL}/catalog/activities/${activity._id || activity.id}`, {
+                                                    headers: { Authorization: `Bearer ${token}` }
+                                                  });
+                                                  setCatalogActivities(prev => prev.filter(a => (a._id || a.id) !== (activity._id || activity.id)));
+                                                } catch (err) {
+                                                  alert('Error al eliminar actividad: ' + (err.response?.data?.message || err.message));
+                                                }
+                                              }
+                                            }}
+                                          >
+                                            Eliminar
+                                          </button>
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              )}
+                            </>
+                          )}
+
+                          {manageModalTab === 'tramo' && (
+                            <>
+                              <h3>Tramos</h3>
+                              {catalogTramos.length === 0 ? (
+                                <p>No hay tramos registrados.</p>
+                              ) : (
+                                <table style={{ width: '100%', borderCollapse: 'collapse', background: theme === 'dark' ? '#232a36' : '#fafdff', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 1px 6px 0 rgba(44,62,80,0.07)' }}>
+                                  <thead>
+                                    <tr style={{ background: theme === 'dark' ? '#273043' : '#f0f6fa' }}>
+                                      <th style={{ padding: '12px 8px', fontWeight: 700, fontSize: 14, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', border: '1px solid #bbb', textAlign: 'left' }}>NOMBRE</th>
+                                      <th style={{ padding: '12px 8px', fontWeight: 700, fontSize: 14, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', border: '1px solid #bbb', textAlign: 'center' }}>ACCIÓN</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {catalogTramos.map((tramo, idx) => (
+                                      <tr key={tramo._id || tramo.id} style={{ background: idx % 2 === 0 ? (theme === 'dark' ? '#232a36' : '#f7fbfd') : (theme === 'dark' ? '#273043' : '#fff') }}>
+                                        <td style={{ border: '1px solid #bbb', padding: '10px 8px', fontSize: '14px' }}>{tramo.nombre}</td>
+                                        <td style={{ border: '1px solid #bbb', padding: '10px 8px', textAlign: 'center' }}>
+                                          <button 
+                                            type="button" 
+                                            className="btn-danger" 
+                                            style={{ minWidth: '80px', fontSize: '12px', padding: '6px 12px' }}
+                                            onClick={async () => {
+                                              if (window.confirm(`¿Estás seguro de eliminar el tramo "${tramo.nombre}"?`)) {
+                                                try {
+                                                  await axios.delete(`${API_URL}/catalog/tramos/${tramo._id || tramo.id}`, {
+                                                    headers: { Authorization: `Bearer ${token}` }
+                                                  });
+                                                  setCatalogTramos(prev => prev.filter(t => (t._id || t.id) !== (tramo._id || tramo.id)));
+                                                } catch (err) {
+                                                  alert('Error al eliminar tramo: ' + (err.response?.data?.message || err.message));
+                                                }
+                                              }
+                                            }}
+                                          >
+                                            Eliminar
+                                          </button>
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              )}
+                            </>
+                          )}
+
+                          {manageModalTab === 'trabajador' && (
+                            <>
+                              <h3>Trabajadores</h3>
+                              {catalogWorkers.length === 0 ? (
+                                <p>No hay trabajadores registrados.</p>
+                              ) : (
+                                <table style={{ width: '100%', borderCollapse: 'collapse', background: theme === 'dark' ? '#232a36' : '#fafdff', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 1px 6px 0 rgba(44,62,80,0.07)' }}>
+                                  <thead>
+                                    <tr style={{ background: theme === 'dark' ? '#273043' : '#f0f6fa' }}>
+                                      <th style={{ padding: '12px 8px', fontWeight: 700, fontSize: 14, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', border: '1px solid #bbb', textAlign: 'left' }}>NOMBRE</th>
+                                      <th style={{ padding: '12px 8px', fontWeight: 700, fontSize: 14, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', border: '1px solid #bbb', textAlign: 'left' }}>RUT</th>
+                                      <th style={{ padding: '12px 8px', fontWeight: 700, fontSize: 14, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', border: '1px solid #bbb', textAlign: 'left' }}>CARGO</th>
+                                      <th style={{ padding: '12px 8px', fontWeight: 700, fontSize: 14, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', border: '1px solid #bbb', textAlign: 'center' }}>ACCIÓN</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {catalogWorkers.map((worker, idx) => (
+                                      <tr key={worker._id || worker.id} style={{ background: idx % 2 === 0 ? (theme === 'dark' ? '#232a36' : '#f7fbfd') : (theme === 'dark' ? '#273043' : '#fff') }}>
+                                        <td style={{ border: '1px solid #bbb', padding: '10px 8px', fontSize: '14px' }}>{worker.nombre}</td>
+                                        <td style={{ border: '1px solid #bbb', padding: '10px 8px', fontSize: '14px' }}>{worker.rut}</td>
+                                        <td style={{ border: '1px solid #bbb', padding: '10px 8px', fontSize: '14px' }}>{worker.cargo}</td>
+                                        <td style={{ border: '1px solid #bbb', padding: '10px 8px', textAlign: 'center' }}>
+                                          <button 
+                                            type="button" 
+                                            className="btn-danger" 
+                                            style={{ minWidth: '80px', fontSize: '12px', padding: '6px 12px' }}
+                                            onClick={async () => {
+                                              if (window.confirm(`¿Estás seguro de eliminar al trabajador "${worker.nombre}"?`)) {
+                                                try {
+                                                  await axios.delete(`${API_URL}/catalog/workers/${worker._id || worker.id}`, {
+                                                    headers: { Authorization: `Bearer ${token}` }
+                                                  });
+                                                  setCatalogWorkers(prev => prev.filter(w => (w._id || w.id) !== (worker._id || worker.id)));
+                                                } catch (err) {
+                                                  alert('Error al eliminar trabajador: ' + (err.response?.data?.message || err.message));
+                                                }
+                                              }
+                                            }}
+                                          >
+                                            Eliminar
+                                          </button>
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              )}
+                            </>
+                          )}
+
+                          {manageModalTab === 'supervisor' && (
+                            <>
+                              <h3>Supervisores</h3>
+                              {catalogSupervisors.length === 0 ? (
+                                <p>No hay supervisores registrados.</p>
+                              ) : (
+                                <table style={{ width: '100%', borderCollapse: 'collapse', background: theme === 'dark' ? '#232a36' : '#fafdff', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 1px 6px 0 rgba(44,62,80,0.07)' }}>
+                                  <thead>
+                                    <tr style={{ background: theme === 'dark' ? '#273043' : '#f0f6fa' }}>
+                                      <th style={{ padding: '12px 8px', fontWeight: 700, fontSize: 14, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', border: '1px solid #bbb', textAlign: 'left' }}>NOMBRE</th>
+                                      <th style={{ padding: '12px 8px', fontWeight: 700, fontSize: 14, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', border: '1px solid #bbb', textAlign: 'left' }}>RUT</th>
+                                      <th style={{ padding: '12px 8px', fontWeight: 700, fontSize: 14, color: theme === 'dark' ? '#7ed6df' : '#2c3e50', border: '1px solid #bbb', textAlign: 'center' }}>ACCIÓN</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {catalogSupervisors.map((supervisor, idx) => (
+                                      <tr key={supervisor._id || supervisor.id} style={{ background: idx % 2 === 0 ? (theme === 'dark' ? '#232a36' : '#f7fbfd') : (theme === 'dark' ? '#273043' : '#fff') }}>
+                                        <td style={{ border: '1px solid #bbb', padding: '10px 8px', fontSize: '14px' }}>{supervisor.nombre}</td>
+                                        <td style={{ border: '1px solid #bbb', padding: '10px 8px', fontSize: '14px' }}>{supervisor.rut}</td>
+                                        <td style={{ border: '1px solid #bbb', padding: '10px 8px', textAlign: 'center' }}>
+                                          <button 
+                                            type="button" 
+                                            className="btn-danger" 
+                                            style={{ minWidth: '80px', fontSize: '12px', padding: '6px 12px' }}
+                                            onClick={async () => {
+                                              if (window.confirm(`¿Estás seguro de eliminar al supervisor "${supervisor.nombre}"?`)) {
+                                                try {
+                                                  await axios.delete(`${API_URL}/catalog/supervisors/${supervisor._id || supervisor.id}`, {
+                                                    headers: { Authorization: `Bearer ${token}` }
+                                                  });
+                                                  setCatalogSupervisors(prev => prev.filter(s => (s._id || s.id) !== (supervisor._id || supervisor.id)));
+                                                } catch (err) {
+                                                  alert('Error al eliminar supervisor: ' + (err.response?.data?.message || err.message));
+                                                }
+                                              }
+                                            }}
+                                          >
+                                            Eliminar
+                                          </button>
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              )}
+                            </>
+                          )}
+                        </div>
+
                         {modalError && <div className="error-box">{modalError}</div>}
                         <div style={{ marginTop: '20px', textAlign: 'center' }}>
-                          <button type="button" className="btn-primary" onClick={() => setAdminModal(null)}>Cerrar</button>
+                          <button type="button" className="btn-primary" onClick={() => setShowManageModal(false)}>Cerrar</button>
                         </div>
                       </div>
                     </div>
